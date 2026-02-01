@@ -1,0 +1,10 @@
+<div class="col-span-full text-center py-12 border rounded-xl border-dashed border-border bg-muted/20">
+    <div class="flex justify-center mb-4 text-muted-foreground">
+        <i data-lucide="package-open" class="w-12 h-12"></i>
+    </div>
+    <h3 class="text-xl font-medium mb-2">No products found</h3>
+    <p class="text-muted-foreground mb-6">Try adjusting your filters or search terms.</p>
+    {% if not is_public_view %}
+    <a href="{% url 'product_create' %}" class="btn btn-primary">Create Product</a>
+    {% endif %}
+</div>

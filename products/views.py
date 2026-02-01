@@ -5,8 +5,47 @@ from .forms import ProductForm
 
 @login_required
 def product_list(request):
-    products = Product.objects.filter(user=request.user).order_by('-created_at')
-    return render(request, 'products/product_list.html', {'products': products})
+    products = Product.objects.filter(user=request.user)
+
+    # Search
+    q = request.GET.get('q')
+    if q:
+        products = products.filter(name__icontains=q) | products.filter(description__icontains=q)
+
+    # Status Filter
+    status = request.GET.get('status')
+    if status == 'public':
+        products = products.filter(is_public=True)
+    elif status == 'private':
+        products = products.filter(is_public=False)
+
+    # Price Filter
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Stock Filter
+    min_stock = request.GET.get('min_stock')
+    max_stock = request.GET.get('max_stock')
+    if min_stock:
+        products = products.filter(stock__gte=min_stock)
+    if max_stock:
+        products = products.filter(stock__lte=max_stock)
+
+    products = products.order_by('-created_at')
+
+    return render(request, 'products/product_list.html', {
+        'products': products,
+        'q': q,
+        'status': status,
+        'min_price': min_price,
+        'max_price': max_price,
+        'min_stock': min_stock,
+        'max_stock': max_stock,
+    })
 
 @login_required
 def product_create(request):
@@ -39,12 +78,41 @@ def product_delete(request, pk):
     if request.method == 'POST':
         product.delete()
         return redirect('product_list')
-    return render(request, 'products/product_confirm_delete.html', {'product': product})
+    return redirect('product_list')
 
 def public_product_list(request):
-    products = Product.objects.filter(is_public=True).order_by('-created_at')
+    products = Product.objects.filter(is_public=True)
+
+    # Search
+    q = request.GET.get('q')
+    if q:
+        products = products.filter(name__icontains=q) | products.filter(description__icontains=q)
+
+    # Price Filter
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    # Stock Filter
+    min_stock = request.GET.get('min_stock')
+    max_stock = request.GET.get('max_stock')
+    if min_stock:
+        products = products.filter(stock__gte=min_stock)
+    if max_stock:
+        products = products.filter(stock__lte=max_stock)
+
+    products = products.order_by('-created_at')
+
     return render(request, 'products/product_list.html', {
         'products': products,
         'title': 'Public Catalog',
-        'is_public_view': True
+        'is_public_view': True,
+        'q': q,
+        'min_price': min_price,
+        'max_price': max_price,
+        'min_stock': min_stock,
+        'max_stock': max_stock,
     })
