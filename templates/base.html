@@ -1,10 +1,10 @@
 {% load static %}
 <!DOCTYPE html>
-<html lang="en" class="light">
+<html lang="pt-br" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Django Basecoat CRUD</title>
+    <title>Basecoat Manager</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -40,13 +40,87 @@
             }
         }
 
-        // Initialize Lucide icons
+        function togglePasswordVisibility(button) {
+            const input = button.parentElement.querySelector('input');
+            const iconEye = button.querySelector('[data-lucide="eye"]');
+            const iconEyeOff = button.querySelector('[data-lucide="eye-off"]');
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                iconEye.classList.add('hidden');
+                iconEyeOff.classList.remove('hidden');
+            } else {
+                input.type = 'password';
+                iconEye.classList.remove('hidden');
+                iconEyeOff.classList.add('hidden');
+            }
+        }
+
+        function createToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+
+            // Map Django tags/types to Basecoat variant classes and titles
+            let variant = 'primary';
+            let iconName = 'info';
+            let title = 'Informação';
+
+            if (type.includes('success')) {
+                variant = 'secondary';
+                iconName = 'check-circle-2';
+                title = 'Sucesso';
+            } else if (type.includes('error') || type.includes('danger')) {
+                variant = 'destructive';
+                iconName = 'alert-circle';
+                title = 'Erro';
+            } else if (type.includes('warning')) {
+                variant = 'warning';
+                iconName = 'alert-triangle';
+                title = 'Aviso';
+            }
+
+            toast.className = `toast toast-${variant} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]`;
+            toast.innerHTML = `
+                <div class="flex-shrink-0 mt-0.5">
+                    <i data-lucide="${iconName}" class="w-5 h-5"></i>
+                </div>
+                <div class="toast-content flex-1 flex flex-col gap-0.5">
+                    <h4 class="text-sm font-bold leading-tight">${title}</h4>
+                    <p class="text-sm opacity-90 leading-snug">${message}</p>
+                </div>
+                <button onclick="this.closest('.toast').remove()" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">
+                    Fechar
+                </button>
+            `;
+
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            // Auto-hide after 6 seconds
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right-full', 'duration-500');
+                    setTimeout(() => toast.remove(), 500);
+                }
+            }, 6000);
+        }
+
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
+
+            // Process any initial messages
+            const initialMessages = document.querySelectorAll('.django-message-data');
+            initialMessages.forEach(el => {
+                createToast(el.dataset.message, el.dataset.tags);
+                el.remove();
+            });
         });
     </script>
 </head>
-<body class="bg-background text-foreground antialiased min-h-screen flex flex-col font-sans">
+<body class="bg-background text-foreground antialiased min-h-screen flex flex-col font-sans overflow-y-scroll">
     <header class="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div class="container mx-auto px-4 h-16 flex justify-between items-center">
             <a href="{% url 'product_list' %}" class="text-xl font-bold flex items-center gap-2">
@@ -60,16 +134,31 @@
                 </button>
 
                 {% if user.is_authenticated %}
-                    <a href="{% url 'public_product_list' %}" class="btn btn-ghost text-muted-foreground">Catalog</a>
-                    <a href="{% url 'product_list' %}" class="btn btn-ghost">Dashboard</a>
-                    <a href="{% url 'product_create' %}" class="btn btn-primary">
+                    <a href="{% url 'public_product_list' %}" class="btn btn-ghost btn-sm text-muted-foreground">Catálogo</a>
+                    <a href="{% url 'product_list' %}" class="btn btn-ghost btn-sm">Dashboard</a>
+                    <a href="{% url 'product_create' %}" class="btn btn-primary btn-sm">
                         <i data-lucide="plus" class="w-4 h-4"></i>
-                        New Product
+                        Novo Produto
                     </a>
-                    <button onclick="toggleLogoutModal(true)" class="btn btn-ghost text-muted-foreground hover:text-foreground">Logout</button>
+
+                    <!-- User Profile -->
+                    <a href="{% url 'profile' %}" class="flex items-center gap-2.5 px-3 py-1.5 border-l border-border ml-1 hover:bg-muted/50 transition-colors rounded-sm h-9">
+                        <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                        </div>
+                        <div class="hidden sm:flex flex-col">
+                            <span class="text-[11px] font-bold leading-none">{{ user.username }}</span>
+                            <span class="text-[9px] text-muted-foreground truncate max-w-[100px]">{{ user.email }}</span>
+                        </div>
+                    </a>
+
+                    <button onclick="toggleLogoutModal(true)" class="btn btn-ghost btn-sm text-muted-foreground hover:text-foreground">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                        <span class="hidden md:inline">Sair</span>
+                    </button>
                 {% else %}
-                    <a href="{% url 'account_login' %}" class="btn btn-ghost">Sign In</a>
-                    <a href="{% url 'account_signup' %}" class="btn btn-primary">Sign Up</a>
+                    <a href="{% url 'account_login' %}" class="btn btn-ghost">Entrar</a>
+                    <a href="{% url 'account_signup' %}" class="btn btn-primary">Cadastrar</a>
                 {% endif %}
             </nav>
         </div>
@@ -81,27 +170,42 @@
 
     <footer class="border-t border-border py-6">
         <div class="container mx-auto px-4 text-center text-muted-foreground text-sm">
-            <p>&copy; 2026 Basecoat App. Built with Django & Basecoat UI.</p>
+            <p>&copy; 2026 Sistema de Produtos. Desenvolvido com Django & Basecoat UI.</p>
         </div>
     </footer>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 min-w-[320px] max-w-md pointer-events-none">
+    </div>
+
+    <!-- Hidden element to ensure Tailwind/Basecoat scans these classes -->
+    <div class="hidden toast-primary toast-secondary toast-destructive toast-warning toast-info"></div>
+
+    {% if messages %}
+        <div class="hidden">
+            {% for message in messages %}
+                <div class="django-message-data" data-message="{{ message }}" data-tags="{{ message.tags }}"></div>
+            {% endfor %}
+        </div>
+    {% endif %}
 
     {% if user.is_authenticated %}
     <!-- Logout Confirmation Modal -->
     <div id="logoutModal" class="hidden fixed inset-0 z-50 bg-background/80 backdrop-blur-sm items-center justify-center p-4">
         <div class="card max-w-sm w-full shadow-lg border-border animate-in fade-in zoom-in duration-200">
             <header>
-                <h2 class="text-xl font-bold">Confirm Logout</h2>
-                <p>Are you sure you want to sign out of the system?</p>
+                <h2 class="text-xl font-bold">Confirmar Logout</h2>
+                <p>Tem certeza que deseja encerrar sua sessão?</p>
             </header>
             <section class="py-4">
-                <p class="text-sm text-muted-foreground">You will need to enter your email and password again to access your products.</p>
+                <p class="text-sm text-muted-foreground">Você precisará digitar seu e-mail e senha novamente para acessar seus produtos.</p>
             </section>
             <footer>
                 <div class="flex justify-end gap-3 w-full border-t border-border pt-4">
-                    <button onclick="toggleLogoutModal(false)" class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-100">Cancel</button>
+                    <button onclick="toggleLogoutModal(false)" class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-100">Cancelar</button>
                     <form method="post" action="{% url 'account_logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="btn btn-destructive">Confirm Logout</button>
+                        <button type="submit" class="btn btn-destructive">Confirmar Saída</button>
                     </form>
                 </div>
             </footer>
