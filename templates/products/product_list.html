@@ -12,16 +12,16 @@
         <div class="flex items-center gap-2">
             <!-- View Toggle -->
             <div class="bg-muted/50 p-1 rounded-lg flex gap-1 border border-border h-10 items-center">
-                <button onclick="setViewMode('grid')" id="btn-grid"
-                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0"
+                <a href="{% url 'set_view_mode' 'grid' %}" id="btn-grid"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if request.session.view_mode|default:'grid' == 'grid' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
                     title="Ver como grade">
                     <i data-lucide="layout-grid" class="w-4 h-4"></i>
-                </button>
-                <button onclick="setViewMode('table')" id="btn-table"
-                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0"
+                </a>
+                <a href="{% url 'set_view_mode' 'table' %}" id="btn-table"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if request.session.view_mode == 'table' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
                     title="Ver como tabela">
                     <i data-lucide="list" class="w-4 h-4"></i>
-                </button>
+                </a>
             </div>
             {% if not is_public_view %}
             <a href="{% url 'product_create' %}"
@@ -90,7 +90,7 @@
     </form>
 
     <!-- Grid View -->
-    <div id="view-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div id="view-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 {% if request.session.view_mode == 'table' %}hidden{% endif %}">
         {% for product in products %}
         <div class="card hover:shadow-md transition-shadow">
             <header>
@@ -146,7 +146,7 @@
     </div>
 
     <!-- Table View -->
-    <div id="view-table" class="hidden">
+    <div id="view-table" class="{% if request.session.view_mode|default:'grid' == 'grid' %}hidden{% endif %}">
         <div class="card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
@@ -249,34 +249,6 @@
 </div>
 
 <script>
-    function setViewMode(mode) {
-        const grid = document.getElementById('view-grid');
-        const table = document.getElementById('view-table');
-        const btnGrid = document.getElementById('btn-grid');
-        const btnTable = document.getElementById('btn-table');
-
-        if (mode === 'grid') {
-            grid.classList.remove('hidden');
-            table.classList.add('hidden');
-            btnGrid.classList.add('bg-background', 'shadow-sm', 'text-foreground');
-            btnTable.classList.remove('bg-background', 'shadow-sm', 'text-foreground');
-            btnTable.classList.add('text-muted-foreground');
-        } else {
-            grid.classList.add('hidden');
-            table.classList.remove('hidden');
-            btnTable.classList.add('bg-background', 'shadow-sm', 'text-foreground');
-            btnGrid.classList.remove('bg-background', 'shadow-sm', 'text-foreground');
-            btnGrid.classList.add('text-muted-foreground');
-        }
-        localStorage.setItem('productViewMode', mode);
-    }
-
-    // Initialize View Mode
-    document.addEventListener('DOMContentLoaded', () => {
-        const savedMode = localStorage.getItem('productViewMode') || 'grid';
-        setViewMode(savedMode);
-    });
-
     function openDeleteModal(url, name) {
         const modal = document.getElementById('deleteModal');
         const form = document.getElementById('deleteForm');

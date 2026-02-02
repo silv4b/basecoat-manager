@@ -10,4 +10,5 @@ urlpatterns = [
     path('profile/', views.profile_view, name='profile'),
     path('profile/delete/', views.delete_account_view, name='delete_account'),
     path('toggle-theme/', views.toggle_theme, name='toggle_theme'),
+    path('view-mode/<str:mode>/', views.set_view_mode, name='set_view_mode'),
 ]

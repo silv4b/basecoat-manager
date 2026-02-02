@@ -155,3 +155,8 @@ def toggle_theme(request):
     new_theme = 'dark' if current_theme == 'light' else 'light'
     request.session['theme'] = new_theme
     return redirect(request.META.get('HTTP_REFERER', '/'))
+
+def set_view_mode(request, mode):
+    if mode in ['grid', 'table']:
+        request.session['view_mode'] = mode
+    return redirect(request.META.get('HTTP_REFERER', '/'))
