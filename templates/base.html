@@ -12,6 +12,12 @@
     <link href="{% static 'css/output.css' %}" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <script>
+        function closeToast(button) {
+            const toast = button.closest('.toast');
+            toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right-full', 'duration-500');
+            setTimeout(() => toast.remove(), 500);
+        }
+
         function toggleLogoutModal(show) {
             const modal = document.getElementById('logoutModal');
             if (show) {
@@ -39,66 +45,19 @@
             }
         }
 
-        function createToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            if (!container) return;
-
-            const toast = document.createElement('div');
-
-            // Map Django tags/types to Basecoat variant classes and titles
-            let variant = 'primary';
-            let iconName = 'info';
-            let title = 'Informação';
-
-            if (type.includes('success')) {
-                variant = 'secondary';
-                iconName = 'check-circle-2';
-                title = 'Sucesso';
-            } else if (type.includes('error') || type.includes('danger')) {
-                variant = 'destructive';
-                iconName = 'alert-circle';
-                title = 'Erro';
-            } else if (type.includes('warning')) {
-                variant = 'warning';
-                iconName = 'alert-triangle';
-                title = 'Aviso';
-            }
-
-            toast.className = `toast toast-${variant} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]`;
-            toast.innerHTML = `
-                <div class="flex-shrink-0 mt-0.5">
-                    <i data-lucide="${iconName}" class="w-5 h-5"></i>
-                </div>
-                <div class="toast-content flex-1 flex flex-col gap-0.5">
-                    <h4 class="text-sm font-bold leading-tight">${title}</h4>
-                    <p class="text-sm opacity-90 leading-snug">${message}</p>
-                </div>
-                <button onclick="this.closest('.toast').remove()" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">
-                    Fechar
-                </button>
-            `;
-
-            container.appendChild(toast);
-            lucide.createIcons();
-
-            // Auto-hide after 6 seconds
-            setTimeout(() => {
-                if (toast.parentElement) {
-                    toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right-full', 'duration-500');
-                    setTimeout(() => toast.remove(), 500);
-                }
-            }, 6000);
-        }
-
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
 
-            // Process any initial messages
-            const initialMessages = document.querySelectorAll('.django-message-data');
-            initialMessages.forEach(el => {
-                createToast(el.dataset.message, el.dataset.tags);
-                el.remove();
+            // Auto-hide existing toasts
+            const toasts = document.querySelectorAll('.toast');
+            toasts.forEach(toast => {
+                setTimeout(() => {
+                    if (toast.parentElement) {
+                        toast.classList.add('animate-out', 'fade-out', 'slide-out-to-right-full', 'duration-500');
+                        setTimeout(() => toast.remove(), 500);
+                    }
+                }, 6000);
             });
         });
     </script>
@@ -170,18 +129,53 @@
     <!-- Toast Container -->
     <div id="toast-container"
         class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 min-w-[320px] max-w-md pointer-events-none">
+        {% if messages %}
+            {% for message in messages %}
+                {% with variant="primary" icon="info" title="Informação" %}
+                    {% if "success" in message.tags %}{% with variant="secondary" icon="check-circle-2" title="Sucesso" %}
+                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+                        <div class="toast-content flex-1 flex flex-col gap-0.5">
+                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+                        </div>
+                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+                    </div>
+                    {% endwith %}
+                    {% elif "error" in message.tags or "danger" in message.tags %}{% with variant="destructive" icon="alert-circle" title="Erro" %}
+                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+                        <div class="toast-content flex-1 flex flex-col gap-0.5">
+                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+                        </div>
+                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+                    </div>
+                    {% endwith %}
+                    {% elif "warning" in message.tags %}{% with variant="warning" icon="alert-triangle" title="Aviso" %}
+                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+                        <div class="toast-content flex-1 flex flex-col gap-0.5">
+                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+                        </div>
+                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+                    </div>
+                    {% endwith %}
+                    {% else %}
+                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+                        <div class="toast-content flex-1 flex flex-col gap-0.5">
+                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+                        </div>
+                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+                    </div>
+                    {% endif %}
+                {% endwith %}
+            {% endfor %}
+        {% endif %}
     </div>
-
-    <!-- Hidden element to ensure Tailwind/Basecoat scans these classes -->
-    <div class="hidden toast-primary toast-secondary toast-destructive toast-warning toast-info"></div>
-
-    {% if messages %}
-    <div class="hidden">
-        {% for message in messages %}
-        <div class="django-message-data" data-message="{{ message }}" data-tags="{{ message.tags }}"></div>
-        {% endfor %}
-    </div>
-    {% endif %}
 
     {% if user.is_authenticated %}
     <!-- Logout Confirmation Modal -->
