@@ -50,43 +50,15 @@
                         Password
                     </label>
                     <div class="relative">
-                        <input type="password" name="password1" placeholder="Password" autocomplete="new-password" required id="id_password1" class="input w-full pr-10" oninput="validatePassword(this)">
+                        <input type="password" name="password1" placeholder="Crie uma senha forte" autocomplete="new-password" required id="id_password1" class="input w-full pr-10">
                         <button type="button" onclick="togglePasswordVisibility(this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             <i data-lucide="eye" class="w-4 h-4"></i>
                             <i data-lucide="eye-off" class="w-4 h-4 hidden"></i>
                         </button>
                     </div>
-
-                    <!-- Password Requirements Checklist -->
-                    <div class="mt-3 p-3 bg-muted/30 rounded-lg border border-border">
-                        <p class="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Password Requirements</p>
-                        <ul class="flex flex-col gap-1.5">
-                            <li id="req-length" class="text-xs text-muted-foreground flex items-center gap-2">
-                                <span class="icon-wrapper w-4 h-4 flex items-center justify-center">
-                                    <i data-lucide="circle" class="w-3 h-3"></i>
-                                </span>
-                                At least 8 characters
-                            </li>
-                            <li id="req-numeric" class="text-xs text-muted-foreground flex items-center gap-2">
-                                <span class="icon-wrapper w-4 h-4 flex items-center justify-center">
-                                    <i data-lucide="circle" class="w-3 h-3"></i>
-                                </span>
-                                Can't be entirely numeric
-                            </li>
-                            <li id="req-similar" class="text-xs text-muted-foreground flex items-center gap-2">
-                                <span class="icon-wrapper w-4 h-4 flex items-center justify-center">
-                                    <i data-lucide="circle" class="w-3 h-3"></i>
-                                </span>
-                                Can't be similar to info (username/email)
-                            </li>
-                            <li id="req-common" class="text-xs text-muted-foreground flex items-center gap-2">
-                                <span class="icon-wrapper w-4 h-4 flex items-center justify-center">
-                                    <i data-lucide="info" class="w-3 h-3"></i>
-                                </span>
-                                Should not be a commonly used password
-                            </li>
-                        </ul>
-                    </div>
+                    <p class="text-[11px] text-muted-foreground mt-2 px-1">
+                        A senha deve ter pelo menos 8 caracteres e não pode ser muito comum ou similar aos seus dados.
+                    </p>
 
                     {% if form.password1.errors %}
                     <p class="text-destructive text-sm mt-2">{{ form.password1.errors.0 }}</p>
@@ -108,43 +80,7 @@
                 </div>
             </section>
 
-            <script>
-                function validatePassword(input) {
-                    const pass = input.value;
-                    const username = document.getElementById('id_username').value.toLowerCase();
-                    const email = document.getElementById('id_email').value.split('@')[0].toLowerCase();
 
-                    const reqs = {
-                        length: pass.length >= 8,
-                        numeric: pass.length > 0 && !/^\d+$/.test(pass),
-                        similar: pass.length > 0 &&
-                                (username.length > 3 && !pass.toLowerCase().includes(username)) &&
-                                (email.length > 3 && !pass.toLowerCase().includes(email)),
-                        common: pass.length > 8 // Just a dummy check for "complex enough"
-                    };
-
-                    updateReq('req-length', reqs.length);
-                    updateReq('req-numeric', reqs.numeric);
-                    updateReq('req-similar', pass.length > 0 ? reqs.similar : false);
-                    // Common password is hard to check client-side, we just mark it as "better" if long
-                    updateReq('req-common', pass.length > 10);
-                }
-
-                function updateReq(id, met) {
-                    const el = document.getElementById(id);
-                    const wrapper = el.querySelector('.icon-wrapper');
-                    if (met) {
-                        el.classList.remove('text-muted-foreground');
-                        el.classList.add('text-green-600', 'font-medium');
-                        wrapper.innerHTML = '<i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i>';
-                    } else {
-                        el.classList.add('text-muted-foreground');
-                        el.classList.remove('text-green-600', 'font-medium');
-                        wrapper.innerHTML = '<i data-lucide="circle" class="w-3 h-3"></i>';
-                    }
-                    lucide.createIcons();
-                }
-            </script>
 
             <footer class="flex flex-col gap-4">
                 <button class="btn btn-primary w-full" type="submit">Cadastrar</button>
