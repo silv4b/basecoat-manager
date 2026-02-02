@@ -21,17 +21,20 @@
             </div>
 
             <p class="text-sm text-muted-foreground leading-relaxed">
-                Esta ação <span class="font-bold text-destructive">não pode ser desfeita</span>. Todos os dados associados a este produto serão apagados imediatamente.
+                Esta ação <span class="font-bold text-destructive">não pode ser desfeita</span>. Todos os dados
+                associados a este produto serão apagados imediatamente.
             </p>
         </section>
 
         <footer class="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t border-border">
-            <a href="{% url 'product_list' %}" class="btn btn-ghost border border-border bg-transparent text-foreground hover:bg-muted flex-1 sm:flex-none justify-center font-medium h-11 px-6">
+            <a href="{% url 'product_list' %}"
+                class="btn btn-ghost border border-border bg-transparent text-foreground hover:bg-muted flex-1 sm:flex-none justify-center font-medium h-11 px-6">
                 Cancelar e Voltar
             </a>
             <form method="post" class="flex-1 sm:flex-none">
                 {% csrf_token %}
-                <button type="submit" class="btn btn-ghost bg-destructive text-white hover:bg-destructive/90 w-full justify-center font-bold h-11 px-8">
+                <button type="submit"
+                    class="btn btn-ghost bg-destructive text-white hover:bg-destructive/90 w-full justify-center font-bold h-11 px-8">
                     Confirmar Exclusão
                 </button>
             </form>

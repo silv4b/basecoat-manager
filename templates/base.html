@@ -130,50 +130,58 @@
     <div id="toast-container"
         class="fixed bottom-6 right-6 z-[100] flex flex-col gap-3 min-w-[320px] max-w-md pointer-events-none">
         {% if messages %}
-            {% for message in messages %}
-                {% with variant="primary" icon="info" title="Informação" %}
-                    {% if "success" in message.tags %}{% with variant="secondary" icon="check-circle-2" title="Sucesso" %}
-                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
-                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
-                        <div class="toast-content flex-1 flex flex-col gap-0.5">
-                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
-                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
-                        </div>
-                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
-                    </div>
-                    {% endwith %}
-                    {% elif "error" in message.tags or "danger" in message.tags %}{% with variant="destructive" icon="alert-circle" title="Erro" %}
-                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
-                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
-                        <div class="toast-content flex-1 flex flex-col gap-0.5">
-                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
-                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
-                        </div>
-                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
-                    </div>
-                    {% endwith %}
-                    {% elif "warning" in message.tags %}{% with variant="warning" icon="alert-triangle" title="Aviso" %}
-                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
-                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
-                        <div class="toast-content flex-1 flex flex-col gap-0.5">
-                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
-                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
-                        </div>
-                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
-                    </div>
-                    {% endwith %}
-                    {% else %}
-                    <div class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
-                        <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
-                        <div class="toast-content flex-1 flex flex-col gap-0.5">
-                            <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
-                            <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
-                        </div>
-                        <button onclick="closeToast(this)" class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
-                    </div>
-                    {% endif %}
-                {% endwith %}
-            {% endfor %}
+        {% for message in messages %}
+        {% with variant="primary" icon="info" title="Informação" %}
+        {% if "success" in message.tags %}{% with variant="secondary" icon="check-circle-2" title="Sucesso" %}
+        <div
+            class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+            <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+            <div class="toast-content flex-1 flex flex-col gap-0.5">
+                <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+            </div>
+            <button onclick="closeToast(this)"
+                class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+        </div>
+        {% endwith %}
+        {% elif "error" in message.tags or "danger" in message.tags %}{% with variant="destructive" icon="alert-circle" title="Erro" %}
+        <div
+            class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+            <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+            <div class="toast-content flex-1 flex flex-col gap-0.5">
+                <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+            </div>
+            <button onclick="closeToast(this)"
+                class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+        </div>
+        {% endwith %}
+        {% elif "warning" in message.tags %}{% with variant="warning" icon="alert-triangle" title="Aviso" %}
+        <div
+            class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+            <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+            <div class="toast-content flex-1 flex flex-col gap-0.5">
+                <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+            </div>
+            <button onclick="closeToast(this)"
+                class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+        </div>
+        {% endwith %}
+        {% else %}
+        <div
+            class="toast toast-{{ variant }} pointer-events-auto shadow-xl animate-in slide-in-from-right-full duration-300 flex items-start gap-4 p-4 min-w-[350px]">
+            <div class="flex-shrink-0 mt-0.5"><i data-lucide="{{ icon }}" class="w-5 h-5"></i></div>
+            <div class="toast-content flex-1 flex flex-col gap-0.5">
+                <h4 class="text-sm font-bold leading-tight">{{ title }}</h4>
+                <p class="text-sm opacity-90 leading-snug">{{ message }}</p>
+            </div>
+            <button onclick="closeToast(this)"
+                class="btn btn-sm bg-foreground/10 hover:bg-foreground/20 border-none h-auto py-1.5 px-3 text-xs font-semibold self-center transition-colors">Fechar</button>
+        </div>
+        {% endif %}
+        {% endwith %}
+        {% endfor %}
         {% endif %}
     </div>
 
@@ -194,7 +202,7 @@
                 <div class="flex justify-end gap-3 w-full border-t border-border pt-4">
                     <button onclick="toggleLogoutModal(false)"
                         class="btn bg-white border border-gray-300 text-gray-700 hover:bg-gray-100">Cancelar</button>
-                    <form method="post" action="{% url 'account_logout' %}">
+                    <form method="post" action="{% url 'custom_logout' %}">
                         {% csrf_token %}
                         <button type="submit" class="btn btn-destructive">Confirmar Saída</button>
                     </form>

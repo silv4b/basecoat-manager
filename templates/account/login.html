@@ -21,20 +21,24 @@
         <form class="login" method="POST" action="{% url 'account_login' %}">
             {% csrf_token %}
 
-            <section class="flex flex-col gap-6 py-6 px-1">
+            <section class="flex flex-col gap-6 py-6 px-6">
                 <div class="field">
                     <label for="id_login" class="text-foreground font-medium mb-1.5">E-mail</label>
-                    <input type="email" name="login" placeholder="Seu endereço de e-mail" autocomplete="email" required id="id_login" class="input w-full">
+                    <input type="email" name="login" placeholder="Seu endereço de e-mail" autocomplete="email" required
+                        id="id_login" class="input w-full">
                 </div>
 
                 <div class="field">
                     <div class="flex justify-between items-center mb-1.5">
                         <label for="id_password" class="text-foreground font-medium">Senha</label>
-                        <a href="{% url 'account_reset_password' %}" class="text-sm text-primary hover:underline">Esqueceu a senha?</a>
+                        <a href="{% url 'account_reset_password' %}"
+                            class="text-sm text-primary hover:underline">Esqueceu a senha?</a>
                     </div>
                     <div class="relative">
-                        <input type="password" name="password" placeholder="Password" autocomplete="current-password" required id="id_password" class="input w-full pr-10">
-                        <button type="button" onclick="togglePasswordVisibility(this)" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                        <input type="password" name="password" placeholder="Password" autocomplete="current-password"
+                            required id="id_password" class="input w-full pr-10">
+                        <button type="button" onclick="togglePasswordVisibility(this)"
+                            class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
                             <i data-lucide="eye" class="w-4 h-4"></i>
                             <i data-lucide="eye-off" class="w-4 h-4 hidden"></i>
                         </button>
@@ -42,10 +46,11 @@
                 </div>
             </section>
 
-            <footer class="flex flex-col gap-4">
+            <footer class="flex flex-col gap-4 px-6">
                 <button class="btn btn-primary w-full" type="submit">Entrar</button>
                 <div class="text-center text-sm text-muted-foreground">
-                    Não tem uma conta? <a href="{% url 'account_signup' %}" class="text-foreground font-medium hover:underline">Cadastre-se</a>
+                    Não tem uma conta? <a href="{% url 'account_signup' %}"
+                        class="text-foreground font-medium hover:underline">Cadastre-se</a>
                 </div>
             </footer>
         </form>
