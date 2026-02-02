@@ -36,7 +36,7 @@
     <!-- Filter Bar -->
     <form method="get" class="card p-4">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div class="field col-span-1 md:col-span-2 lg:col-span-1">
+            <div class="field col-span-1 md:col-span-2 {% if is_public_view %}lg:col-span-2{% else %}lg:col-span-1{% endif %}">
                 <div class="relative">
                     <i data-lucide="search"
                         class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"></i>

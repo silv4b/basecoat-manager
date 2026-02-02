@@ -22,17 +22,22 @@
         <form method="post" class="product-form">
             {% csrf_token %}
 
-            <section class="flex flex-col gap-6 py-6 px-1">
+            <section class="flex flex-col gap-6 py-6 px-6">
                 <div class="field">
                     <label for="id_name" class="text-foreground font-medium mb-1.5">Nome do Produto</label>
-                    <input type="text" name="name" id="id_name" placeholder="Ex: Cadeira Ergonômica" value="{{ form.name.value|default:'' }}" class="input w-full" required>
-                    {% if form.name.errors %}<p class="text-destructive text-xs mt-1">{{ form.name.errors.0 }}</p>{% endif %}
+                    <input type="text" name="name" id="id_name" placeholder="Ex: Cadeira Ergonômica"
+                        value="{{ form.name.value|default:'' }}" class="input w-full" required>
+                    {% if form.name.errors %}<p class="text-destructive text-xs mt-1">{{ form.name.errors.0 }}</p>
+                    {% endif %}
                 </div>
 
                 <div class="field">
                     <label for="id_description" class="text-foreground font-medium mb-1.5">Descrição (Opcional)</label>
-                    <textarea name="description" id="id_description" placeholder="Descreva as principais características do produto..." class="input w-full min-h-[120px]">{{ form.description.value|default:'' }}</textarea>
-                    {% if form.description.errors %}<p class="text-destructive text-xs mt-1">{{ form.description.errors.0 }}</p>{% endif %}
+                    <textarea name="description" id="id_description"
+                        placeholder="Descreva as principais características do produto..."
+                        class="input w-full min-h-[120px]">{{ form.description.value|default:'' }}</textarea>
+                    {% if form.description.errors %}<p class="text-destructive text-xs mt-1">
+                        {{ form.description.errors.0 }}</p>{% endif %}
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -40,32 +45,45 @@
                         <label for="id_price" class="text-foreground font-medium mb-1.5">Preço (R$)</label>
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
-                            <input type="number" step="0.01" name="price" id="id_price" placeholder="0.00" value="{{ form.price.value|unlocalize|default:'' }}" class="input w-full pl-10" required>
+                            <input type="number" step="0.01" name="price" id="id_price" placeholder="0.00"
+                                value="{{ form.price.value|unlocalize|default:'' }}" class="input w-full pl-10"
+                                required>
                         </div>
-                        {% if form.price.errors %}<p class="text-destructive text-xs mt-1">{{ form.price.errors.0 }}</p>{% endif %}
+                        {% if form.price.errors %}<p class="text-destructive text-xs mt-1">{{ form.price.errors.0 }}</p>
+                        {% endif %}
                     </div>
 
                     <div class="field">
                         <label for="id_stock" class="text-foreground font-medium mb-1.5">Quantidade em Estoque</label>
-                        <input type="number" name="stock" id="id_stock" placeholder="0" value="{{ form.stock.value|unlocalize|default:'' }}" class="input w-full" required>
-                        {% if form.stock.errors %}<p class="text-destructive text-xs mt-1">{{ form.stock.errors.0 }}</p>{% endif %}
+                        <input type="number" name="stock" id="id_stock" placeholder="0"
+                            value="{{ form.stock.value|unlocalize|default:'' }}" class="input w-full" required>
+                        {% if form.stock.errors %}<p class="text-destructive text-xs mt-1">{{ form.stock.errors.0 }}</p>
+                        {% endif %}
                     </div>
                 </div>
 
-                <div class="field flex items-center gap-3 p-4 bg-muted/30 rounded-lg border border-border transition-colors hover:bg-muted/50 cursor-pointer">
-                    <input type="checkbox" name="is_public" id="id_is_public" class="w-4 h-4 rounded border-border text-primary focus:ring-primary" {% if form.is_public.value %}checked{% endif %}>
-                    <label for="id_is_public" class="cursor-pointer select-none">
-                        <span class="block font-medium">Tornar este produto público</span>
-                        <span class="block text-xs text-muted-foreground mt-0.5">Produtos públicos podem ser visualizados por qualquer pessoa no catálogo global.</span>
+                <div class="field p-4 bg-muted/30 rounded-lg border border-border transition-colors hover:bg-muted/50">
+                    <label for="id_is_public" class="flex items-start gap-3 cursor-pointer select-none">
+                        <input type="checkbox" name="is_public" id="id_is_public"
+                            class="shrink-0 mt-1 w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                            {% if form.is_public.value %}checked{% endif %}>
+                        <div>
+                            <span class="block font-medium whitespace-nowrap">Produto Público</span>
+                            <span class="block text-xs text-muted-foreground mt-0.5">
+                                Produtos públicos podem ser visualizados por qualquer pessoa no catálogo global.
+                            </span>
+                        </div>
                     </label>
                 </div>
             </section>
 
-            <footer class="flex justify-end gap-3 pt-6 border-t border-border mt-4">
-                <a href="{% url 'product_list' %}" class="btn btn-ghost bg-transparent border border-border text-foreground hover:bg-muted flex-1 md:flex-none justify-center font-medium">
+            <footer class="flex justify-end gap-3 pt-6 border-t border-border mt-4 px-6">
+                <a href="{% url 'product_list' %}"
+                    class="btn btn-ghost bg-transparent border border-border text-foreground hover:bg-muted flex-1 md:flex-none justify-center font-medium">
                     Cancelar
                 </a>
-                <button type="submit" class="btn btn-ghost bg-primary text-primary-foreground hover:bg-primary/90 flex-1 md:flex-none justify-center font-bold px-8">
+                <button type="submit"
+                    class="btn btn-ghost bg-primary text-primary-foreground hover:bg-primary/90 flex-1 md:flex-none justify-center font-bold px-8">
                     {% if form.instance.pk %}Atualizar Produto{% else %}Criar Produto{% endif %}
                 </button>
             </footer>
