@@ -115,12 +115,53 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-muted/50 border-b border-border">
+                        {% with current_sort=request.GET.sort|default:"name" current_dir=request.GET.dir|default:"asc" %}
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Categoria</th>
-                            <th class="px-6 py-4 font-semibold">Slug</th>
-                            <th class="px-6 py-4 font-semibold">Cor</th>
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=name&dir={% if current_sort == 'name' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Categoria
+                                    {% if current_sort == 'name' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=slug&dir={% if current_sort == 'slug' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Slug
+                                    {% if current_sort == 'slug' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=color&dir={% if current_sort == 'color' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Cor
+                                    {% if current_sort == 'color' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
                             <th class="px-6 py-4 font-semibold text-right">Ações</th>
                         </tr>
+                        {% endwith %}
                     </thead>
                     <tbody class="divide-y divide-border">
                         {% for category in categories %}

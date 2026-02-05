@@ -5,16 +5,19 @@ from django.contrib.auth.models import User
 from .models import Product, Category, PriceHistory
 from .forms import ProductForm, CategoryForm
 from django.contrib import messages
+from django.db.models import Min, Sum, F, ExpressionWrapper, DecimalField, Q
 
 
 # --- Product Views ---
 @login_required
 def product_list(request):
+    # Lógica para limpar filtros
     if "clear" in request.GET:
         if "filters_dashboard" in request.session:
             del request.session["filters_dashboard"]
         return redirect("product_list")
 
+    # Recuperação de filtros da sessão
     session_filters = request.session.get("filters_dashboard", {})
 
     q = request.GET.get("q") if "q" in request.GET else session_filters.get("q", "")
@@ -49,6 +52,12 @@ def product_list(request):
         else session_filters.get("category", "")
     )
 
+    # Parâmetros de Ordenação
+    sort_field = request.GET.get("sort", "name")
+    sort_direction = request.GET.get("dir", "asc")
+    prefix = "" if sort_direction == "asc" else "-"
+
+    # Salva filtros na sessão
     request.session["filters_dashboard"] = {
         "q": q,
         "status": status,
@@ -59,15 +68,14 @@ def product_list(request):
         "max_stock": max_stock,
     }
 
+    # QuerySet Base
     products = Product.objects.filter(user=request.user)
 
+    # Filtros
     if q:
-        products = products.filter(name__icontains=q) | products.filter(
-            description__icontains=q
-        )
+        products = products.filter(Q(name__icontains=q) | Q(description__icontains=q))
     if category_id:
-        products = products.filter(categories=category_id)
-
+        products = products.filter(categories__id=category_id)
     if status == "public":
         products = products.filter(is_public=True)
     elif status == "private":
@@ -81,12 +89,32 @@ def product_list(request):
     if max_stock:
         products = products.filter(stock__lte=max_stock)
 
-    products = products.distinct().order_by("-created_at")
+    # Ordenação com Annotate para evitar duplicados
+    if sort_field == "category":
+        products = products.annotate(sort_key=Min("categories__name")).order_by(
+            f"{prefix}sort_key"
+        )
+    else:
+        valid_fields = {
+            "name": "name",
+            "price": "price",
+            "stock": "stock",
+            "status": "is_public",
+        }
+        target = valid_fields.get(sort_field, "name")
+        products = products.order_by(f"{prefix}{target}")
 
+    # Remove duplicatas residuais de filtros M2M
+    products = products.distinct()
+
+    # Cálculo de Estatísticas usando agregação do Banco de Dados
     stats = {
         "total_count": products.count(),
-        "total_stock": sum(p.stock for p in products),
-        "total_value": sum(p.price * p.stock for p in products),
+        "total_stock": products.aggregate(Sum("stock"))["stock__sum"] or 0,
+        "total_value": products.annotate(
+            val=ExpressionWrapper(F("price") * F("stock"), output_field=DecimalField())
+        ).aggregate(total=Sum("val"))["total"]
+        or 0,
     }
 
     return render(
@@ -96,6 +124,8 @@ def product_list(request):
             "products": products,
             "categories": Category.objects.all(),
             "stats": stats,
+            "title": "Meus Produtos",
+            "is_public_view": False,
             "q": q,
             "status": status,
             "category_id": category_id,
@@ -353,27 +383,31 @@ def price_history_overview(request):
 # --- Category Views ---
 @login_required
 def category_list(request):
-    if "clear" in request.GET:
-        if "filters_categories" in request.session:
-            del request.session["filters_categories"]
-        return redirect("category_list")
+    # 1. Captura os parâmetros da URL (com valores padrão)
+    sort_field = request.GET.get("sort", "name")
+    sort_direction = request.GET.get("dir", "asc")
 
-    session_filters = request.session.get("filters_categories", {})
-    q = request.GET.get("q") if "q" in request.GET else session_filters.get("q", "")
+    # 2. Mapeia os nomes das colunas do HTML para os campos do Model
+    # Isso evita erros se alguém tentar injetar um campo que não existe
+    valid_sort_fields = {
+        "name": "name",
+        "slug": "slug",
+        "color": "color",
+    }
 
-    request.session["filters_categories"] = {"q": q}
+    # Valida o campo, se não for válido, usa 'name'
+    target_field = valid_sort_fields.get(sort_field, "name")
 
-    categories = Category.objects.all()
-    if q:
-        categories = categories.filter(
-            models.Q(name__icontains=q)
-            | models.Q(description__icontains=q)
-            | models.Q(slug__icontains=q)
-        )
+    # 3. Define o prefixo de direção (Django usa '-' para descendente)
+    prefix = "" if sort_direction == "asc" else "-"
 
-    categories = categories.order_by("name")
+    # 4. Aplica a ordenação no QuerySet
+    categories = Category.objects.all().order_by(f"{prefix}{target_field}")
+
     return render(
-        request, "products/category_list.html", {"categories": categories, "q": q}
+        request,
+        "products/category_list.html",
+        {"categories": categories, "title": "Categorias"},
     )
 
 
@@ -545,37 +579,59 @@ def user_public_catalog(request, username):
 
 
 def public_product_list(request):
+    # Captura de filtros
+    q = request.GET.get("q", "")
+    category_id = request.GET.get("category", "")
+    min_price = request.GET.get("min_price", "")
+    max_price = request.GET.get("max_price", "")
+    min_stock = request.GET.get("min_stock", "")
+    max_stock = request.GET.get("max_stock", "")
+
+    # Parâmetros de Ordenação
+    sort_field = request.GET.get("sort", "name")
+    sort_direction = request.GET.get("dir", "asc")
+    prefix = "" if sort_direction == "asc" else "-"
+
+    # QuerySet Inicial
     products = Product.objects.filter(is_public=True)
-    q = request.GET.get("q")
+
+    # Filtros
     if q:
-        products = products.filter(name__icontains=q) | products.filter(
-            description__icontains=q
-        )
-
-    category_id = request.GET.get("category")
+        products = products.filter(Q(name__icontains=q) | Q(description__icontains=q))
     if category_id:
-        products = products.filter(categories=category_id)
-
-    min_price = request.GET.get("min_price")
-    max_price = request.GET.get("max_price")
+        products = products.filter(categories__id=category_id)
     if min_price:
         products = products.filter(price__gte=min_price)
     if max_price:
         products = products.filter(price__lte=max_price)
-
-    min_stock = request.GET.get("min_stock")
-    max_stock = request.GET.get("max_stock")
     if min_stock:
         products = products.filter(stock__gte=min_stock)
     if max_stock:
         products = products.filter(stock__lte=max_stock)
 
-    products = products.distinct().order_by("-created_at")
+    # Ordenação com Annotate
+    if sort_field == "category":
+        products = products.annotate(sort_key=Min("categories__name")).order_by(
+            f"{prefix}sort_key"
+        )
+    elif sort_field == "user":
+        products = products.order_by(f"{prefix}user__username")
+    else:
+        valid_fields = {"name": "name", "price": "price", "stock": "stock"}
+        target = valid_fields.get(sort_field, "name")
+        products = products.order_by(f"{prefix}{target}")
 
+    # Distinct final
+    products = products.distinct()
+
+    # Estatísticas
     stats = {
         "total_count": products.count(),
-        "total_stock": sum(p.stock for p in products),
-        "total_value": sum(p.price * p.stock for p in products),
+        "total_stock": products.aggregate(Sum("stock"))["stock__sum"] or 0,
+        "total_value": products.annotate(
+            val=ExpressionWrapper(F("price") * F("stock"), output_field=DecimalField())
+        ).aggregate(total=Sum("val"))["total"]
+        or 0,
     }
 
     return render(
@@ -588,7 +644,7 @@ def public_product_list(request):
             "title": "Catálogo Público",
             "is_public_view": True,
             "q": q,
-            "category_id": request.GET.get("category", ""),
+            "category_id": category_id,
             "min_price": min_price,
             "max_price": max_price,
             "min_stock": min_stock,

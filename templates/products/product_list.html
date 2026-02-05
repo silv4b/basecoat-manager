@@ -265,17 +265,97 @@
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-muted/50 border-b border-border">
+                        {% with current_sort=request.GET.sort|default:"name" current_dir=request.GET.dir|default:"asc" %}
                         <tr>
-                            <th class="px-6 py-4 font-semibold">Nome</th>
-                            <th class="px-6 py-4 font-semibold">Categoria</th>
-                            <th class="px-6 py-4 font-semibold">Preço</th>
-                            <th class="px-6 py-4 font-semibold">Estoque</th>
-                            <th class="px-6 py-4 font-semibold">Status</th>
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=name&dir={% if current_sort == 'name' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Nome
+                                    {% if current_sort == 'name' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=category&dir={% if current_sort == 'category' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Categoria
+                                    {% if current_sort == 'category' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=price&dir={% if current_sort == 'price' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Preço
+                                    {% if current_sort == 'price' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=stock&dir={% if current_sort == 'stock' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Estoque
+                                    {% if current_sort == 'stock' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=status&dir={% if current_sort == 'status' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Status
+                                    {% if current_sort == 'status' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
+
                             {% if is_public_view %}
-                            <th class="px-6 py-4 font-semibold">Dono</th>
+                            <th class="px-6 py-4 font-semibold">
+                                <a href="?sort=user&dir={% if current_sort == 'user' and current_dir == 'asc' %}desc{% else %}asc{% endif %}"
+                                    class="flex items-center gap-1.5 hover:text-primary transition-colors group">
+                                    Dono
+                                    {% if current_sort == 'user' %}
+                                    <i data-lucide="chevron-{% if current_dir == 'asc' %}up{% else %}down{% endif %}"
+                                        class="w-4 h-4 text-primary"></i>
+                                    {% else %}
+                                    <i data-lucide="arrow-up-down"
+                                        class="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                                    {% endif %}
+                                </a>
+                            </th>
                             {% endif %}
+
                             <th class="px-6 py-4 font-semibold text-right">Ações</th>
                         </tr>
+                        {% endwith %}
                     </thead>
                     <tbody class="divide-y divide-border">
                         {% for product in products %}
