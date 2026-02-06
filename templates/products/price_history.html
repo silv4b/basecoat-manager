@@ -67,7 +67,8 @@
                     <input type="date" id="data_fim" name="data_fim" value="{{ data_fim }}" class="input w-full">
                 </div>
                 <div class="flex gap-2">
-                    <button type="submit" class="btn btn-primary flex-1">
+                    <button type="submit"
+                        class="btn btn-ghost flex-1 border border-border bg-transparent text-foreground hover:bg-muted">
                         <i data-lucide="search" class="w-4 h-4 mr-2"></i>
                         Filtrar
                     </button>
@@ -199,14 +200,14 @@
         </section>
 
         <footer>
-            <div class="flex justify-end gap-3">
-                {% comment %} <a href="{% url 'product_list' %}" {% endcomment %}
+            <div class="flex justify-between gap-2 w-full">
                 <a onclick="history.back()""
-                    class="btn btn-ghost border border-border bg-transparent text-foreground hover:bg-muted">
+                    class=" btn btn-ghost border border-border bg-transparent text-foreground hover:bg-muted">
                     Voltar
                 </a>
                 {% if product.user == user %}
-                <a href="{% url 'product_update' product.pk %}" class="btn btn-primary">
+                <a href="{% url 'product_update' product.pk %}"
+                    class="btn btn-ghost border border-border bg-transparent text-foreground hover:bg-muted">
                     <i data-lucide="pencil" class="w-4 h-4 mr-2"></i>
                     Editar Produto
                 </a>

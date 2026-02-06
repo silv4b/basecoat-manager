@@ -35,7 +35,7 @@
                     <label for="id_description" class="text-foreground font-medium mb-1.5">Descrição (Opcional)</label>
                     <textarea name="description" id="id_description"
                         placeholder="Descreva as principais características do produto..."
-                        class="input w-full min-h-[120px]">{{ form.description.value|default:'' }}</textarea>
+                        class="input w-full min-h-30">{{ form.description.value|default:'' }}</textarea>
                     {% if form.description.errors %}<p class="text-destructive text-xs mt-1">
                         {{ form.description.errors.0 }}</p>{% endif %}
                 </div>
@@ -46,8 +46,7 @@
                         <div class="relative">
                             <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">R$</span>
                             <input type="text" name="price" id="id_price" placeholder="0,00"
-                                value="{{ form.price.value|localize|default:'' }}" class="input w-full pl-10"
-                                required>
+                                value="{{ form.price.value|localize|default:'' }}" class="input w-full pl-10" required>
                         </div>
                         {% if form.price.errors %}<p class="text-destructive text-xs mt-1">{{ form.price.errors.0 }}</p>
                         {% endif %}
@@ -63,17 +62,21 @@
                 </div>
 
                 <div class="field">
-                    <label class="text-foreground font-medium mb-1.5 block font-bold">Categorias</label>
+                    <label class="text-foreground font-medium mb-1.5 block">
+                        Categorias
+                    </label>
                     <div class="space-y-3 relative">
                         <!-- Search and Selected Badges Area -->
-                        <div class="card p-3 bg-muted/20 border-dashed min-h-[50px] flex flex-wrap gap-2 items-center" id="category-tags-container">
+                        <div class="card p-3 bg-muted/20 border-dashed min-h-12.5 flex flex-wrap gap-2 items-center"
+                            id="category-tags-container">
                             <!-- Badges will be injected here via JS -->
                             <input type="text" id="category-search" placeholder="Pesquisar categoria..."
-                                   class="bg-transparent border-none outline-none text-sm flex-1 min-w-[150px] focus:ring-0">
+                                class="bg-transparent border-none outline-none text-sm flex-1 min-w-37.5 focus:ring-0">
                         </div>
 
                         <!-- Search Results Dropdown -->
-                        <div id="category-results" class="hidden card absolute z-20 w-full max-h-48 overflow-y-auto shadow-xl border-border p-1 animate-in fade-in slide-in-from-top-2 duration-200">
+                        <div id="category-results"
+                            class="gap-2 hidden card absolute z-20 w-full max-h-48 overflow-y-auto shadow-xl border-border p-1 animate-in fade-in slide-in-from-top-2 duration-200">
                             <!-- Results injected here -->
                         </div>
 
@@ -82,7 +85,8 @@
                             {{ form.categories }}
                         </div>
                     </div>
-                    {% if form.categories.errors %}<p class="text-destructive text-xs mt-1">{{ form.categories.errors.0 }}</p>{% endif %}
+                    {% if form.categories.errors %}<p class="text-destructive text-xs mt-1">
+                        {{ form.categories.errors.0 }}</p>{% endif %}
                 </div>
 
                 <div class="field p-4 bg-muted/30 rounded-lg border border-border transition-colors hover:bg-muted/50">
@@ -101,14 +105,15 @@
             </section>
 
             <footer class="flex justify-end gap-3 pt-6 border-t border-border mt-4 px-6">
-                <a href="{% url 'product_list' %}"
-                    class="btn btn-ghost bg-transparent border border-border text-foreground hover:bg-muted flex-1 md:flex-none justify-center font-medium">
-                    Cancelar
-                </a>
-                <button type="submit"
-                    class="btn btn-ghost bg-primary text-primary-foreground hover:bg-primary/90 flex-1 md:flex-none justify-center font-bold px-8">
-                    {% if form.instance.pk %}Atualizar Produto{% else %}Criar Produto{% endif %}
-                </button>
+                {% comment %} <a href="{% url 'product_list' %}" {% endcomment %} <!-- Cancel Button -->
+                    <a onclick="history.back()"""
+                        class="btn btn-ghost bg-transparent border border-border text-foreground hover:bg-muted flex-1 md:flex-none justify-center font-medium">
+                        Cancelar
+                    </a>
+                    <button type="submit"
+                        class="btn btn-ghost bg-primary text-primary-foreground hover:bg-primary/90 flex-1 md:flex-none justify-center font-bold px-8">
+                        {% if form.instance.pk %}Atualizar Produto{% else %}Criar Produto{% endif %}
+                    </button>
             </footer>
         </form>
     </div>
@@ -157,7 +162,8 @@
                 if (cb.checked) {
                     const label = cb.parentElement.textContent.trim();
                     const badge = document.createElement('span');
-                    badge.className = 'badge bg-primary text-primary-foreground flex items-center gap-1.5 py-1 px-2.5 rounded-full text-xs font-bold shadow-sm animate-in zoom-in duration-200';
+                    badge.className =
+                        'badge bg-primary text-primary-foreground flex items-center gap-1.5 py-1 px-2.5 rounded-full text-xs font-bold shadow-sm animate-in zoom-in duration-200';
                     badge.innerHTML = `
                         ${label}
                         <button type="button" class="hover:text-destructive-foreground transition-colors" data-id="${cb.value}">
@@ -187,7 +193,8 @@
                 filtered.forEach(cb => {
                     const label = cb.parentElement.textContent.trim();
                     const item = document.createElement('div');
-                    item.className = `p-2.5 flex justify-between items-center cursor-pointer hover:bg-muted transition-colors rounded-md ${cb.checked ? 'bg-primary/5 text-primary font-bold' : ''}`;
+                    item.className =
+                        `p-2.5 flex justify-between items-center cursor-pointer hover:bg-muted transition-colors rounded-md ${cb.checked ? 'bg-primary/5 text-primary font-bold' : ''}`;
                     item.innerHTML = `
                         <span>${label}</span>
                         ${cb.checked ? '<i data-lucide="check" class="w-4 h-4"></i>' : '<i data-lucide="plus" class="w-4 h-4 opacity-30"></i>'}

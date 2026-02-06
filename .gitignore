@@ -1,5 +1,5 @@
 # OLD
-basecoat-ant-venv/
+kore-env/
 node_modules/
 __pycache__/
 *.pyc

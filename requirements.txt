@@ -1,8 +1,13 @@
+anyio==4.12.1
 asgiref==3.11.0
 crispy-tailwind==1.0.3
 Django==6.0.1
 django-allauth==65.14.0
+django-browser-reload==1.21.0
 django-crispy-forms==2.5
+django-watchfiles==1.4.0
+idna==3.11
 psycopg2-binary==2.9.11
 sqlparse==0.5.5
 tzdata==2025.3
+watchfiles==1.1.1

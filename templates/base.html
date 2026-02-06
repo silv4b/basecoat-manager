@@ -78,10 +78,16 @@
                 </button>
 
                 {% else %}
-                <a href="{% url 'account_login' %}"
-                    class="btn btn-ghost btn-sm text-foreground hover:bg-muted px-2">Entrar</a>
+                <a href="{% url 'account_login' %}" {% comment %}
+                    class="btn btn-ghost btn-sm text-foreground hover:bg-muted px-2"> {% endcomment %}
+                    class="btn btn-ghost bg-transparent shadow-none text-foreground hover:bg-muted font-medium h-10 px-4
+                    flex items-center gap-2">
+                    Entrar
+                </a>
                 <a href="{% url 'account_signup' %}"
-                    class="btn btn-ghost btn-sm text-foreground hover:bg-muted px-2">Cadastrar</a>
+                    class="btn btn-ghost bg-transparent shadow-none text-foreground hover:bg-muted font-medium h-10 px-4 flex items-center gap-2">
+                    Cadastrar
+                </a>
                 {% endif %}
             </nav>
         </div>

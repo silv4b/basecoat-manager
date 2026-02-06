@@ -54,7 +54,7 @@ DB_PORT=5432
 
 ## 4. Atualização das Configurações do Django
 
-Agora você precisa alterar o arquivo `basecoat_project/settings.py` para que ele leia as informações do banco de dados a partir das variáveis de ambiente.
+Agora você precisa alterar o arquivo `kore-product-manager/settings.py` para que ele leia as informações do banco de dados a partir das variáveis de ambiente.
 
 Primeiro, instale o pacote `python-dotenv` para permitir que o Django leia o arquivo `.env`:
 
@@ -62,7 +62,7 @@ Primeiro, instale o pacote `python-dotenv` para permitir que o Django leia o arq
 pip install python-dotenv
 ```
 
-Em seguida, abra o arquivo `basecoat_project/settings.py` e adicione no topo do arquivo (após os imports):
+Em seguida, abra o arquivo `kore-product-manager/settings.py` e adicione no topo do arquivo (após os imports):
 
 ```python
 import os
