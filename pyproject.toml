@@ -1,0 +1,53 @@
+[project]
+name = "kore-product-manager"
+version = "0.1.0"
+description = "Simple product manager using Basecoat UI and Django."
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "anyio==4.12.1",
+    "asgiref==3.11.0",
+    "beautifulsoup4>=4.14.3",
+    "coverage>=7.13.3",
+    "crispy-tailwind==1.0.3",
+    "django==6.0.1",
+    "django-allauth==65.14.0",
+    "django-browser-reload==1.21.0",
+    "django-crispy-forms==2.5",
+    "django-stubs>=5.2.9",
+    "django-watchfiles==1.4.0",
+    "idna==3.11",
+    "iniconfig>=2.3.0",
+    "poethepoet>=0.40.0",
+    "psycopg2-binary==2.9.11",
+    "pytest>=9.0.2",
+    "pytest-cov>=7.0.0",
+    "pytest-django>=4.11.1",
+    "pytest-watch>=4.2.0",
+    "rich>=14.3.2",
+    "sqlparse==0.5.5",
+    "tzdata==2025.3",
+    "watchfiles==1.1.1",
+]
+
+[tool.poe.tasks]
+# Npm tasks
+npm_watch = { shell = "npm run watch" }
+npm_build = { shell = "npm run build" }
+
+# Django tasks
+runserver = "python manage.py runserver"
+migrate = { shell = "python manage.py makemigrations && python manage.py migrate" }
+
+# Test Tasks
+pytest = { shell = "pytest" }
+coverage = { shell = "coverage run -m pytest" }
+report = { shell = "coverage report" }
+coveragehtml = { shell = "coverage html" }
+
+# Taks sequences
+[tool.poe.tasks.test]
+sequence = ["coverage", "report", "coveragehtml"]
+
+[tool.poe.tasks.dev]
+sequence = ["npm_watch", "npm_build", "runserver"]

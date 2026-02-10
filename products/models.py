@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import PriceHistory
 
 
 class Category(models.Model):
@@ -33,6 +37,12 @@ class Product(models.Model):
     is_public = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    """ Como price_history é injetado em Product com  <related_name="price_history">
+        isso avisa ao linter que price_history defato existe em Product.
+    """
+    if TYPE_CHECKING:
+        price_history: models.Manager["PriceHistory"]
 
     def __str__(self):
         return self.name

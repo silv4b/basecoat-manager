@@ -28,6 +28,10 @@ class ProductForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": "input w-full", "placeholder": "0,00"})
     )
 
+    stock = forms.IntegerField(
+        widget=forms.NumberInput(attrs={"class": "input w-full", "placeholder": "0"})
+    )
+
     class Meta:
         model = Product
         fields = ["categories", "name", "description", "price", "stock", "is_public"]
@@ -48,6 +52,15 @@ class ProductForm(forms.ModelForm):
                 attrs={"class": "checkbox", "id": "id_is_public"}
             ),
         }
+
+    def clean_stock(self):
+        stock = self.cleaned_data.get("stock")
+        assert stock is not None
+        if stock < 0:
+            raise forms.ValidationError(
+                "Ops! Você não pode ter um estoque menor que zero."
+            )
+        return stock
 
     def clean_price(self):
         price_str = self.cleaned_data.get("price")
