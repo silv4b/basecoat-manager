@@ -4,6 +4,10 @@ from .models import Product, Category
 
 
 class CategoryForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+
     class Meta:
         model = Category
         fields = ["name", "slug", "description", "color"]
@@ -22,8 +26,25 @@ class CategoryForm(forms.ModelForm):
             ),
         }
 
+    def clean_slug(self):
+        slug = self.cleaned_data["slug"]
+        if (
+            self.user
+            and Category.objects.filter(user=self.user, slug=slug)
+            .exclude(pk=self.instance.pk)
+            .exists()
+        ):
+            raise forms.ValidationError("Você já possui uma categoria com este slug.")
+        return slug
+
 
 class ProductForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop("user", None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields["categories"].queryset = Category.objects.filter(user=user)
+
     price = forms.CharField(
         widget=forms.TextInput(attrs={"class": "input w-full", "placeholder": "0,00"})
     )

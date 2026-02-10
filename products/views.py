@@ -117,12 +117,19 @@ def product_list(request):
         or 0,
     }
 
+    # Determine view mode
+    view_mode = "grid"
+    if request.user.is_authenticated:
+        view_mode = request.user.profile.view_preferences.get("product_list", "grid")
+    else:
+        view_mode = request.session.get("view_mode_product_list", "grid")
+
     return render(
         request,
         "products/product_list.html",
         {
             "products": products,
-            "categories": Category.objects.all(),
+            "categories": Category.objects.filter(user=request.user),
             "stats": stats,
             "title": "Meus Produtos",
             "is_public_view": False,
@@ -133,6 +140,8 @@ def product_list(request):
             "max_price": max_price,
             "min_stock": min_stock,
             "max_stock": max_stock,
+            "view_mode": view_mode,
+            "view_context": "product_list",
         },
     )
 
@@ -140,7 +149,7 @@ def product_list(request):
 @login_required
 def product_create(request):
     if request.method == "POST":
-        form = ProductForm(request.POST)
+        form = ProductForm(request.POST, user=request.user)
         if form.is_valid():
             product = form.save(commit=False)
             product.user = request.user
@@ -149,7 +158,7 @@ def product_create(request):
             messages.success(request, f'Produto "{product.name}" criado com sucesso!')
             return redirect("product_list")
     else:
-        form = ProductForm()
+        form = ProductForm(user=request.user)
     return render(
         request, "products/product_form.html", {"form": form, "title": "Add Product"}
     )
@@ -159,7 +168,7 @@ def product_create(request):
 def product_update(request, pk):
     product = get_object_or_404(Product, pk=pk, user=request.user)
     if request.method == "POST":
-        form = ProductForm(request.POST, instance=product)
+        form = ProductForm(request.POST, instance=product, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(
@@ -167,7 +176,7 @@ def product_update(request, pk):
             )
             return redirect("product_list")
     else:
-        form = ProductForm(instance=product)
+        form = ProductForm(instance=product, user=request.user)
     return render(
         request,
         "products/product_form.html",
@@ -284,7 +293,7 @@ def price_history_overview(request):
     produto_mais_alteracoes = {
         "produto": produto_mais_alteracoes_obj,
         "count": (
-            produto_mais_alteracoes_obj.num_alteracoes
+            produto_mais_alteracoes_obj.num_alteracoes  # type: ignore
             if produto_mais_alteracoes_obj
             else 0
         ),
@@ -306,13 +315,13 @@ def price_history_overview(request):
     ).filter(previous_price__isnull=False)
 
     for p in products_with_prices:
-        if p.current_price > p.previous_price:
-            percentual = ((p.current_price - p.previous_price) / p.previous_price) * 100
+        if p.current_price > p.previous_price:  # type: ignore
+            percentual = ((p.current_price - p.previous_price) / p.previous_price) * 100  # type: ignore
             if percentual > maior_aumento["percentual"]:
                 maior_aumento["percentual"] = percentual
                 maior_aumento["produto"] = p
-        elif p.current_price < p.previous_price:
-            percentual = ((p.previous_price - p.current_price) / p.previous_price) * 100
+        elif p.current_price < p.previous_price:  # type: ignore
+            percentual = ((p.previous_price - p.current_price) / p.previous_price) * 100  # type: ignore
             if percentual > maior_reducao["percentual"]:
                 maior_reducao["percentual"] = percentual
                 maior_reducao["produto"] = p
@@ -372,7 +381,7 @@ def price_history_overview(request):
         "maior_reducao": maior_reducao,
         "media_alteracoes": media_alteracoes,
         "produtos_com_historico": produtos_com_historico,
-        "categorias": Category.objects.filter(products__user=request.user).distinct(),
+        "categorias": Category.objects.filter(user=request.user).distinct(),
         "selected_category": int(category_id) if category_id else "",
         "q": q,
     }
@@ -402,25 +411,41 @@ def category_list(request):
     prefix = "" if sort_direction == "asc" else "-"
 
     # 4. Aplica a ordenação no QuerySet
-    categories = Category.objects.all().order_by(f"{prefix}{target_field}")
+    categories = Category.objects.filter(user=request.user).order_by(
+        f"{prefix}{target_field}"
+    )
+
+    # Determine view mode
+    view_mode = "grid"
+    if request.user.is_authenticated:
+        view_mode = request.user.profile.view_preferences.get("category_list", "grid")
+    else:
+        view_mode = request.session.get("view_mode_category_list", "grid")
 
     return render(
         request,
         "products/category_list.html",
-        {"categories": categories, "title": "Categorias"},
+        {
+            "categories": categories,
+            "title": "Categorias",
+            "view_mode": view_mode,
+            "view_context": "category_list",
+        },
     )
 
 
 @login_required
 def category_create(request):
     if request.method == "POST":
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
+            category = form.save(commit=False)
+            category.user = request.user
+            category.save()
             messages.success(request, "Categoria criada com sucesso!")
             return redirect("category_list")
     else:
-        form = CategoryForm()
+        form = CategoryForm(user=request.user)
     return render(
         request,
         "products/category_form.html",
@@ -430,15 +455,15 @@ def category_create(request):
 
 @login_required
 def category_update(request, pk):
-    category = get_object_or_404(Category, pk=pk)
+    category = get_object_or_404(Category, pk=pk, user=request.user)
     if request.method == "POST":
-        form = CategoryForm(request.POST, instance=category)
+        form = CategoryForm(request.POST, instance=category, user=request.user)
         if form.is_valid():
             form.save()
             messages.success(request, "Categoria atualizada com sucesso!")
             return redirect("category_list")
     else:
-        form = CategoryForm(instance=category)
+        form = CategoryForm(instance=category, user=request.user)
     return render(
         request,
         "products/category_form.html",
@@ -448,7 +473,7 @@ def category_update(request, pk):
 
 @login_required
 def category_delete(request, pk):
-    category = get_object_or_404(Category, pk=pk)
+    category = get_object_or_404(Category, pk=pk, user=request.user)
     if request.method == "POST":
         category.delete()
         messages.success(request, "Categoria removida com sucesso.")
@@ -460,22 +485,24 @@ def category_delete(request, pk):
 
 @login_required
 def category_duplicate(request, pk):
-    original_category = get_object_or_404(Category, pk=pk)
+    original_category = get_object_or_404(Category, pk=pk, user=request.user)
     if request.method == "POST":
-        form = CategoryForm(request.POST)
+        form = CategoryForm(request.POST, user=request.user)
         if form.is_valid():
-            form.save()
+            category = form.save(commit=False)
+            category.user = request.user
+            category.save()
             messages.success(request, "Categoria duplicada com sucesso!")
             return redirect("category_list")
     else:
         # Preenche os dados iniciais, mas limpa o slug para forçar um novo ou alteração
         initial_data = {
-            "name": f"{original_category.name} (Cópia)",
+            "name": f"{original_category.name} (Copy)",
             "description": original_category.description,
             "color": original_category.color,
-            "slug": f"{original_category.slug}-copia",
+            "slug": f"{original_category.slug}-copy",
         }
-        form = CategoryForm(initial=initial_data)
+        form = CategoryForm(initial=initial_data, user=request.user)
 
     return render(
         request,
@@ -559,12 +586,21 @@ def user_public_catalog(request, username):
         "total_value": sum(p.price * p.stock for p in products),
     }
 
+    # Determine view mode
+    view_mode = "grid"
+    if request.user.is_authenticated:
+        view_mode = request.user.profile.view_preferences.get(
+            "user_public_catalog", "grid"
+        )
+    else:
+        view_mode = request.session.get("view_mode_user_public_catalog", "grid")
+
     return render(
         request,
         "products/product_list.html",
         {
             "products": products,
-            "categories": Category.objects.all(),
+            "categories": Category.objects.filter(user=catalog_user),
             "stats": stats,
             "title": f"Catálogo de {catalog_user.username}",
             "is_public_view": True,
@@ -574,6 +610,8 @@ def user_public_catalog(request, username):
             "max_price": max_price,
             "min_stock": min_stock,
             "max_stock": max_stock,
+            "view_mode": view_mode,
+            "view_context": "user_public_catalog",
         },
     )
 
@@ -634,12 +672,21 @@ def public_product_list(request):
         or 0,
     }
 
+    # Determine view mode
+    view_mode = "grid"
+    if request.user.is_authenticated:
+        view_mode = request.user.profile.view_preferences.get(
+            "public_product_list", "grid"
+        )
+    else:
+        view_mode = request.session.get("view_mode_public_product_list", "grid")
+
     return render(
         request,
         "products/product_list.html",
         {
             "products": products,
-            "categories": Category.objects.all(),
+            "categories": Category.objects.filter(products__is_public=True).distinct(),
             "stats": stats,
             "title": "Catálogo Público",
             "is_public_view": True,
@@ -649,6 +696,8 @@ def public_product_list(request):
             "max_price": max_price,
             "min_stock": min_stock,
             "max_stock": max_stock,
+            "view_mode": view_mode,
+            "view_context": "public_product_list",
         },
     )
 
@@ -678,7 +727,15 @@ def logout_view(request):
     return redirect("product_list")
 
 
-def set_view_mode(request, mode):
+def set_view_mode(request, context, mode):
     if mode in ["grid", "table"]:
-        request.session["view_mode"] = mode
+        if request.user.is_authenticated:
+            profile = request.user.profile
+            # Ensure view_preferences is a dict
+            if not isinstance(profile.view_preferences, dict):
+                profile.view_preferences = {}
+            profile.view_preferences[context] = mode
+            profile.save()
+        else:
+            request.session[f"view_mode_{context}"] = mode
     return redirect(request.META.get("HTTP_REFERER", "/"))

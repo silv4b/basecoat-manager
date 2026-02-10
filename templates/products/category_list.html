@@ -11,13 +11,13 @@
         <div class="flex items-center gap-2">
             <!-- View Toggle -->
             <div class="bg-muted/50 p-1 rounded-lg flex gap-1 border border-border h-10 items-center">
-                <a href="{% url 'set_view_mode' 'grid' %}" id="btn-grid"
-                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if request.session.view_mode|default:'grid' == 'grid' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
+                <a href="{% url 'set_view_mode' view_context 'grid' %}" id="btn-grid"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if view_mode == 'grid' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
                     title="Ver como grade">
                     <i data-lucide="layout-grid" class="w-4 h-4"></i>
                 </a>
-                <a href="{% url 'set_view_mode' 'table' %}" id="btn-table"
-                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if request.session.view_mode == 'table' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
+                <a href="{% url 'set_view_mode' view_context 'table' %}" id="btn-table"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if view_mode == 'table' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
                     title="Ver como tabela">
                     <i data-lucide="list" class="w-4 h-4"></i>
                 </a>
@@ -58,7 +58,7 @@
 
     <!-- Grid View -->
     <div id="view-grid"
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 {% if request.session.view_mode == 'table' %}hidden{% endif %}">
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 {% if view_mode == 'table' %}hidden{% endif %}">
         {% for category in categories %}
         <div class="card h-full flex flex-col justify-between">
             <header class="flex justify-between items-start gap-4">
@@ -110,7 +110,7 @@
     </div>
 
     <!-- Table View -->
-    <div id="view-table" class="{% if request.session.view_mode|default:'grid' == 'grid' %}hidden{% endif %}">
+    <div id="view-table" class="{% if view_mode == 'grid' %}hidden{% endif %}">
         <div class="card overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left">

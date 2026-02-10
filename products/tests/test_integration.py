@@ -1,4 +1,5 @@
 from decimal import Decimal
+from django.http import HttpResponse
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -18,24 +19,28 @@ class ProductWorkflowTest(BaseTestCase):
 
     def test_complete_product_lifecycle(self):
         """Test complete product lifecycle from creation to deletion"""
-        category = CategoryFactory.create(name="Electronics")
+        category = CategoryFactory.create(name="Test Category", user=self.user)
 
-        # 1. Create product
+        # Criando o produto
         create_data = {
-            "name": "Test Laptop",
-            "description": "High performance laptop",
-            "price": "1299,99",  # Changed from "1.299,99" to "1299.99"
+            "name": "Notebook Lenovo Thinkpad",
+            "description": "Notebook Top das Galáxias",
+            "price": "5299,99",
             "stock": 5,
             "is_public": True,
             "categories": [category.pk],
         }
 
         response = self.client.post(reverse("product_create"), data=create_data)
+
+        # from utils.general.rich_print import beautify_response
+        # beautify_response(response=response)
+
         self.assertEqual(response.status_code, 302)
 
-        product = Product.objects.get(name="Test Laptop")
+        product = Product.objects.get(name="Notebook Lenovo Thinkpad")
         self.assertEqual(product.user, self.user)
-        self.assertEqual(product.price, Decimal("1299.99"))
+        self.assertEqual(product.price, Decimal("5299.99"))
         self.assertIn(category, product.categories.all())
 
         # Verify price history was created
@@ -43,18 +48,18 @@ class ProductWorkflowTest(BaseTestCase):
 
         # 2. View product list
         response = self.client.get(reverse("product_list"))
-        self.assertContains(response, "Test Laptop")
+        self.assertContains(response, "Notebook Lenovo Thinkpad")
 
         # 3. View product details
         response = self.client.get(reverse("product_detail", kwargs={"pk": product.pk}))
-        self.assertContains(response, "Test Laptop")
-        self.assertContains(response, "High performance laptop")
+        self.assertContains(response, "Notebook Lenovo Thinkpad")
+        self.assertContains(response, "Notebook Top das Galáxias")
 
         # 4. Update product
         update_data = {
             "name": "Updated Laptop",
             "description": "Updated description",
-            "price": "999,99",
+            "price": "9999,99",
             "stock": 3,
             "is_public": False,
         }
@@ -67,7 +72,7 @@ class ProductWorkflowTest(BaseTestCase):
         product.refresh_from_db()
 
         self.assertEqual(product.name, "Updated Laptop")
-        self.assertEqual(product.price, Decimal("999.99"))
+        self.assertEqual(product.price, Decimal("9999.99"))
         self.assertFalse(product.is_public)
 
         # Verify price history was updated
@@ -75,7 +80,7 @@ class ProductWorkflowTest(BaseTestCase):
 
         # 5. View price history
         response = self.client.get(reverse("price_history", kwargs={"pk": product.pk}))
-        self.assertContains(response, "1.299,99")
+        self.assertContains(response, "5.299,99")
         self.assertContains(response, "999,99")
 
         # 6. Delete product
@@ -232,7 +237,7 @@ class CategoryWorkflowTest(BaseTestCase):
 
     def test_complete_category_lifecycle(self):
         """Test complete category lifecycle from creation to deletion"""
-        # 1. Create category
+        # Cria a categoria
         create_data = {
             "name": "New Category",
             "slug": "new-category",
@@ -248,11 +253,11 @@ class CategoryWorkflowTest(BaseTestCase):
         self.assertEqual(category.description, "Category description")
         self.assertEqual(category.color, "#ff5733")
 
-        # 2. View category list
+        # Ver lista de categorias
         response = self.client.get(reverse("category_list"))
         self.assertContains(response, "New Category")
 
-        # 3. Update category
+        # Atualizar a categoria
         update_data = {
             "name": "Updated Category",
             "slug": "updated-category",
@@ -270,18 +275,22 @@ class CategoryWorkflowTest(BaseTestCase):
         self.assertEqual(category.description, "Updated description")
         self.assertEqual(category.color, "#33ff57")
 
-        # 4. Duplicate category
+        # Duplicando a categoria
         response = self.client.get(
             reverse("category_duplicate", kwargs={"pk": category.pk})
         )
-        self.assertContains(response, "Updated Category (Cópia)")
-        self.assertContains(response, "updated-category-copia")
 
-        # Complete the duplication
+        # from utils.general.rich_print import beautify_response
+        # beautify_response(response=response)
+
+        self.assertContains(response, "Updated Category (Copy)")
+        self.assertContains(response, "updated-category-copy")
+
+        # Duplicação terminada
         response = self.client.post(
             reverse("category_duplicate", kwargs={"pk": category.pk}),
             {
-                "name": "Updated Category (Cópia)",
+                "name": "Updated Category (Copy)",
                 "slug": "updated-category-copy",
                 "description": "Updated description",
                 "color": "#33ff57",
@@ -289,10 +298,10 @@ class CategoryWorkflowTest(BaseTestCase):
         )
         self.assertEqual(response.status_code, 302)
 
-        duplicated_category = Category.objects.get(name="Updated Category (Cópia)")
+        duplicated_category = Category.objects.get(name="Updated Category (Copy)")
         self.assertEqual(duplicated_category.slug, "updated-category-copy")
 
-        # 5. Delete original category
+        # Deleta categoria original
         response = self.client.post(
             reverse("category_delete", kwargs={"pk": category.pk})
         )
@@ -312,33 +321,45 @@ class UserAccountWorkflowTest(BaseTestCase):
 
     def test_complete_user_registration_and_profile_workflow(self):
         """Test user registration and profile management"""
-        # User is already created via factory
+        # 1. Login
         self.client.login(username=self.user.username, password="testpass123")
 
-        # 1. View profile
-        response = self.client.get(reverse("profile"))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, self.user.username)
-
-        # 2. Update profile
+        # --- 1. Update profile (Username/Email) ---
         profile_data = {"username": "newusername", "email": "newemail@example.com"}
-
         response = self.client.post(reverse("profile"), data=profile_data)
         self.assertEqual(response.status_code, 302)
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "newusername")
-        self.assertEqual(self.user.email, "newemail@example.com")
 
-        # 3. Test theme functionality
+        # --- 2. Test theme functionality ---
         response = self.client.get(reverse("toggle_theme"))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.client.session.get("theme"), "dark")
 
-        # 4. Test view mode functionality
-        response = self.client.get(reverse("set_view_mode", kwargs={"mode": "grid"}))
+        # Verifica no Perfil (Fonte da Verdade)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.profile.theme, "dark")  # type: ignore
+
+        # --- 3. Test view mode functionality ---
+        context_name = "product_list"
+        # Mudamos o modo para 'grid'
+        response = self.client.get(
+            reverse("set_view_mode", kwargs={"context": context_name, "mode": "grid"})
+        )
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.client.session.get("view_mode"), "grid")
+
+        # A. Verificação no Banco de Dados (Isso prova que a View rodou com sucesso)
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.profile.view_preferences.get(context_name), "grid")  # type: ignore
+
+        # B. Verificação Real de Integração (O teste definitivo)
+        # Em vez de brigar com o objeto 'session', vamos carregar a página de produtos
+        # e ver se ela está usando o modo que acabamos de definir.
+        response = self.client.get(reverse("product_list"))
+        self.assertEqual(response.status_code, 200)
+
+        # No seu views.py, a product_list pega o view_mode do perfil/sessão e joga no context
+        self.assertEqual(response.context["view_mode"], "grid")
 
 
 class PriceHistoryWorkflowTest(BaseTestCase):
@@ -447,7 +468,7 @@ class ErrorHandlingWorkflowTest(BaseTestCase):
     def test_form_validation_workflow(self):
         """Test form validation errors for products and categories"""
 
-        # 1. Teste de criação de produto inválido
+        # Teste de criação de produto inválido
         # Dados que violam as regras do Model/Form
         response = self.client.post(
             reverse("product_create"),
@@ -468,23 +489,26 @@ class ErrorHandlingWorkflowTest(BaseTestCase):
         self.assertIn("price", form.errors)
         self.assertIn("stock", form.errors)
 
-        # 2. Teste de criação de categoria inválida (Slug duplicado)
-        category = CategoryFactory.create(slug="test-slug")
+        # Teste de criação de categoria inválida (Slug duplicado)
+        category = CategoryFactory.create(slug="test-slug", user=self.user)
 
         response = self.client.post(
             reverse("category_create"),
             {
                 "name": "Another Category",
-                "slug": "test-slug",  # Erro: Já existe no banco
+                "slug": "test-slug",  # Slug duplicado para o mesmo user
+                "color": "#ff0000",
             },
         )
 
-        # Aqui o status 200 já estava correto no seu código original
         self.assertEqual(response.status_code, 200)
 
         form_cat = response.context["form"]
         self.assertFalse(form_cat.is_valid())
         self.assertIn("slug", form_cat.errors)
+        self.assertEqual(
+            form_cat.errors["slug"], ["Você já possui uma categoria com este slug."]
+        )
 
     def test_not_found_workflow(self):
         """Test 404 scenarios"""

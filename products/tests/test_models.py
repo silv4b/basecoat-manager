@@ -15,33 +15,54 @@ class CategoryModelTest(TestCase):
     def test_category_creation(self):
         """Test creating a category with all fields"""
         category = CategoryFactory.create(
-            name="Electronics",
-            slug="electronics",
+            name="My Electronics",
+            slug="my-electronics",
             description="Electronic products",
             color="#ff0000",
         )
 
-        self.assertEqual(category.name, "Electronics")
-        self.assertEqual(category.slug, "electronics")
+        self.assertEqual(category.name, "My Electronics")
+        self.assertEqual(category.slug, "my-electronics")
         self.assertEqual(category.description, "Electronic products")
         self.assertEqual(category.color, "#ff0000")
-        self.assertEqual(str(category), "Electronics")
+        self.assertEqual(str(category), "My Electronics")
 
     def test_category_verbose_name_plural(self):
         """Test verbose name plural is correctly set"""
         self.assertEqual(Category._meta.verbose_name_plural, "Categories")
 
-    def test_category_unique_slug(self):
-        """Test that slug must be unique"""
-        CategoryFactory.create(slug="test-slug")
+    def test_category_unique_slug_per_user(self):
+        """Test that slug must be unique per user"""
+        user = UserFactory.create()
+        CategoryFactory.create(user=user, slug="test-slug")
         with self.assertRaises(Exception):  # IntegrityError for unique constraint
-            CategoryFactory.create(slug="test-slug")
+            CategoryFactory.create(user=user, slug="test-slug")
+
+    def test_category_duplicate_slug_different_users(self):
+        """Test that different users can have same slug"""
+        user1 = UserFactory.create()
+        user2 = UserFactory.create()
+
+        c1 = CategoryFactory.create(user=user1, slug="t-slug")
+        c2 = CategoryFactory.create(user=user2, slug="t-slug")
+
+        self.assertEqual(c1.slug, c2.slug)
+        self.assertNotEqual(c1.pk, c2.pk)
+
+    def test_default_categories_creation(self):
+        """Test that default categories are created for new user"""
+        user = UserFactory.create()
+        # Default categories: "Eletrônicos", "Importados", "Nacionais", "Utensilios"
+        self.assertEqual(Category.objects.filter(user=user).count(), 4)
+        slugs = list(Category.objects.filter(user=user).values_list("slug", flat=True))
+        self.assertIn("eletronicos", slugs)
+        self.assertIn("importados", slugs)
 
 
 class ProductModelTest(TestCase):
     def setUp(self):
         self.user = UserFactory.create()
-        self.category = CategoryFactory.create()
+        self.category = CategoryFactory.create(user=self.user)
 
     def test_product_creation(self):
         """Test creating a product with all fields"""
@@ -76,7 +97,7 @@ class ProductModelTest(TestCase):
         product = ProductFactory.create(user=self.user)
 
         self.assertEqual(product.user, self.user)
-        self.assertIn(product, self.user.products.all())
+        self.assertIn(product, self.user.products.all())# type: ignore
 
     def test_product_category_relationship(self):
         """Test many-to-many relationship with categories"""
@@ -86,8 +107,8 @@ class ProductModelTest(TestCase):
         product = ProductFactory.create()
         product.categories.add(category1, category2)
 
-        self.assertIn(product, category1.products.all())
-        self.assertIn(product, category2.products.all())
+        self.assertIn(product, category1.products.all())# type: ignore
+        self.assertIn(product, category2.products.all())# type: ignore
         self.assertEqual(product.categories.count(), 2)
 
     def test_product_public_filtering(self):
@@ -148,7 +169,7 @@ class PriceHistoryModelTest(TestCase):
         # The oldest (original from product creation) should be last
         original_history = histories.last()
         self.assertEqual(
-            original_history.price, Decimal("100.00")
+            original_history.price, Decimal("100.00")# type: ignore
         )  # Original product price
 
     def test_price_history_verbose_name_plural(self):
@@ -170,8 +191,8 @@ class ProfileModelTest(TestCase):
     def test_profile_creation(self):
         """Test profile creation via signal"""
         self.assertTrue(hasattr(self.user, "profile"))
-        self.assertEqual(self.user.profile.user, self.user)
-        self.assertEqual(self.user.profile.theme, "light")
+        self.assertEqual(self.user.profile.user, self.user)# type: ignore
+        self.assertEqual(self.user.profile.theme, "light")# type: ignore
 
     def test_profile_string_representation(self):
         """Test string representation"""
@@ -179,7 +200,7 @@ class ProfileModelTest(TestCase):
         self.user.save()
 
         expected = f"{self.user.username}'s profile"
-        self.assertEqual(str(self.user.profile), expected)
+        self.assertEqual(str(self.user.profile), expected)  # type: ignore
 
     def test_profile_theme_choices(self):
         """Test theme choices"""
@@ -193,15 +214,15 @@ class ProfileModelTest(TestCase):
 
     def test_profile_default_theme(self):
         """Test default theme is light"""
-        self.assertEqual(self.user.profile.theme, "light")
+        self.assertEqual(self.user.profile.theme, "light")  # type: ignore
 
     def test_profile_theme_update(self):
         """Test updating profile theme"""
-        self.user.profile.theme = "dark"
-        self.user.profile.save()
+        self.user.profile.theme = "dark"  # type: ignore
+        self.user.profile.save()  # type: ignore
 
         self.user.refresh_from_db()
-        self.assertEqual(self.user.profile.theme, "dark")
+        self.assertEqual(self.user.profile.theme, "dark")  # type: ignore
 
 
 class SignalTests(TestCase):
@@ -210,7 +231,7 @@ class SignalTests(TestCase):
         user = UserFactory.create()
 
         self.assertTrue(hasattr(user, "profile"))
-        self.assertIsInstance(user.profile, Profile)
+        self.assertIsInstance(user.profile, Profile)  # type: ignore
 
     def test_price_history_signal_on_product_creation(self):
         """Test that price history is created when product is created"""
@@ -218,7 +239,7 @@ class SignalTests(TestCase):
 
         self.assertEqual(product.price_history.count(), 1)
         history = product.price_history.first()
-        self.assertEqual(history.price, Decimal("199.99"))
+        self.assertEqual(history.price, Decimal("199.99"))  # type: ignore
 
     def test_price_history_signal_on_price_change(self):
         """Test that price history is created when price changes"""

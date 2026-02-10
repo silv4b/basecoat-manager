@@ -34,6 +34,7 @@ urlpatterns = [
     # Others
     path("toggle-theme/", views.toggle_theme, name="toggle_theme"),
     path("logout/", views.logout_view, name="custom_logout"),
-    path("view-mode/<str:mode>/", views.set_view_mode, name="set_view_mode"),
-
+    path(
+        "view-mode/<str:context>/<str:mode>/", views.set_view_mode, name="set_view_mode"
+    ),
 ]

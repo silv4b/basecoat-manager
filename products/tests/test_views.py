@@ -12,7 +12,6 @@ from products.tests.factories import (
     PriceHistoryFactory,
 )
 from products.tests.test_utils import BaseTestCase
-from utils.general.rich_print import beautify_response
 
 
 class ProductViewTest(BaseTestCase):
@@ -20,7 +19,7 @@ class ProductViewTest(BaseTestCase):
         self.client = Client()
         self.user = UserFactory.create_admin()
         self.other_user = UserFactory.create(username="otheruser")
-        self.category = CategoryFactory.create()
+        self.category = CategoryFactory.create(user=self.user)
         # self.client.login(username="admin", password="Adm@1adn!!!")
         self.client.force_login(self.user)
 
@@ -326,8 +325,8 @@ class CategoryViewTest(BaseTestCase):
 
     def test_category_list_view(self):
         """Test category list view"""
-        CategoryFactory.create(name="Category A")
-        CategoryFactory.create(name="Category B")
+        CategoryFactory.create(user=self.user, name="Category A")
+        CategoryFactory.create(user=self.user, name="Category B")
 
         response = self.client.get(reverse("category_list"))
 
@@ -338,15 +337,26 @@ class CategoryViewTest(BaseTestCase):
 
     def test_category_list_view_sorting(self):
         """Test category list sorting"""
-        CategoryFactory.create(name="Z Category")
-        CategoryFactory.create(name="A Category")
+        CategoryFactory.create(user=self.user, name="Z Category")
+        CategoryFactory.create(user=self.user, name="A Category")
 
         response = self.client.get(
             reverse("category_list"), {"sort": "name", "dir": "asc"}
         )
         categories = list(response.context["categories"])
         names = [c.name for c in categories]
-        self.assertEqual(names, ["A Category", "Z Category"])
+        # "Eletronicos", "Importados", "Nacionais", "Utensilios" são as categorias base que todo novo usuário "Ganha"
+        self.assertEqual(
+            names,
+            [
+                "A Category",
+                "Eletronicos",
+                "Importados",
+                "Nacionais",
+                "Utensilios",
+                "Z Category",
+            ],
+        )
 
     def test_category_create_view_get(self):
         """Test category creation view GET"""
@@ -372,7 +382,7 @@ class CategoryViewTest(BaseTestCase):
 
     def test_category_update_view(self):
         """Test category update view"""
-        category = CategoryFactory.create(name="Original Name")
+        category = CategoryFactory.create(user=self.user, name="Original Name")
 
         form_data = {
             "name": "Updated Name",
@@ -390,7 +400,7 @@ class CategoryViewTest(BaseTestCase):
 
     def test_category_delete_view(self):
         """Test category deletion"""
-        category = CategoryFactory.create(name="To Delete")
+        category = CategoryFactory.create(user=self.user, name="To Delete")
 
         response = self.client.post(
             reverse("category_delete", kwargs={"pk": category.pk})
@@ -402,6 +412,7 @@ class CategoryViewTest(BaseTestCase):
     def test_category_duplicate_view(self):
         """Test category duplication"""
         original = CategoryFactory.create(
+            user=self.user,
             name="Original",
             slug="original",
             description="Original desc",
@@ -413,8 +424,8 @@ class CategoryViewTest(BaseTestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Original (Cópia)")
-        self.assertContains(response, "original-copia")
+        self.assertContains(response, "Original (Copy)")
+        self.assertContains(response, "original-copy")
 
 
 class PublicCatalogViewTest(BaseTestCase):
@@ -535,12 +546,25 @@ class UtilityViewTest(BaseTestCase):
 
     def test_set_view_mode_view(self):
         """Test view mode setting"""
-        response = self.client.get(reverse("set_view_mode", kwargs={"mode": "grid"}))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(self.client.session.get("view_mode"), "grid")
+        self.client.logout()
 
-        response = self.client.get(reverse("set_view_mode", kwargs={"mode": "table"}))
-        self.assertEqual(self.client.session.get("view_mode"), "table")
+        url = reverse("set_view_mode", kwargs={"context": "test_ctx", "mode": "grid"})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.client.session.get("view_mode_test_ctx"), "grid")
+
+        url = reverse("set_view_mode", kwargs={"context": "test_ctx", "mode": "table"})
+        response = self.client.get(url)
+        self.assertEqual(self.client.session.get("view_mode_test_ctx"), "table")
+
+    def test_set_view_mode_authenticated(self):
+        """Test view mode setting for authenticated user"""
+        url = reverse("set_view_mode", kwargs={"context": "prod_list", "mode": "table"})
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 302)
+
+        self.user.profile.refresh_from_db()  # type: ignore
+        self.assertEqual(self.user.profile.view_preferences.get("prod_list"), "table")  # type: ignore
 
     def test_logout_view_post(self):
         """Test custom logout view"""
@@ -567,7 +591,8 @@ class MessageTest(BaseTestCase):
             follow=True,  # Essencial para capturar a mensagem após o redirecionamento
         )
 
-        beautify_response(response)  # type: ignore # _MonkeyPatchedWSGIResponse herda de HttpResponse
+        # from utils.general.rich_print import beautify_response
+        # beautify_response(response)  # type: ignore # _MonkeyPatchedWSGIResponse herda de HttpResponse
 
         # A string exata que a sua View gera:
         expected_message = f'Produto "{product_name}" criado com sucesso!'

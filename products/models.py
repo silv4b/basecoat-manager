@@ -9,8 +9,11 @@ if TYPE_CHECKING:
 
 
 class Category(models.Model):
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="categories", null=True, blank=True
+    )
     name = models.CharField(max_length=100)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField()
     description = models.TextField(blank=True)
     color = models.CharField(max_length=7, default="#3b82f6")  # Hex color para UI
 
@@ -19,6 +22,9 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "slug"], name="unique_user_slug")
+        ]
 
 
 class Product(models.Model):
@@ -70,6 +76,7 @@ class Profile(models.Model):
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     theme = models.CharField(max_length=10, choices=THEME_CHOICES, default="light")
+    view_preferences = models.JSONField(default=dict, blank=True)
 
     def __str__(self):
         return f"{self.user.username}'s profile"
@@ -117,3 +124,20 @@ def track_price_changes(sender, instance, created, **kwargs):
         # Se o preço mudou, cria um novo registro
         elif last_price_entry.price != instance.price:
             PriceHistory.objects.create(product=instance, price=instance.price)
+
+
+@receiver(post_save, sender=User)
+def create_default_categories(sender, instance, created, **kwargs):
+    if created:
+        from django.utils.text import slugify
+
+        default_categories = ["Eletronicos", "Importados", "Nacionais", "Utensilios"]
+        for cat_name in default_categories:
+            Category.objects.get_or_create(
+                user=instance,
+                name=cat_name,
+                defaults={
+                    "slug": slugify(cat_name),
+                    "description": f"Categoria padrao: {cat_name}",
+                },
+            )

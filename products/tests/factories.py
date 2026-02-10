@@ -5,8 +5,6 @@ from django.contrib.auth.models import User
 from products.models import Category, Product, PriceHistory, Profile
 
 
-
-
 def get_random_string(length=10):
     """Generate random string for unique values"""
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=length))
@@ -45,7 +43,9 @@ class CategoryFactory:
     def create(cls, **kwargs):
         cls._counter += 1
         suffix = get_random_string(5)
+        user = kwargs.pop("user", UserFactory.create())
         defaults = {
+            "user": user,
             "name": f"Test Category {cls._counter}",
             "slug": f"test-category-{cls._counter}-{suffix}",
             "description": "Test description",
