@@ -41,9 +41,9 @@
 
                 <a href="{% url 'product_list' %}"
                     class="btn btn-ghost btn-sm bg-transparent border-none shadow-none text-foreground hover:bg-muted font-medium flex items-center gap-2 px-2 md:px-3"
-                    title="Dashboard">
-                    <i data-lucide="circle-gauge" class="w-4 h-4"></i>
-                    <span class="hidden lg:inline">Dashboard</span>
+                    title="Produtos">
+                    <i data-lucide="package-2" class="w-4 h-4"></i>
+                    <span class="hidden lg:inline">Produtos</span>
                 </a>
 
                 <a href="{% url 'category_list' %}"
@@ -57,7 +57,14 @@
                     class="btn btn-ghost btn-sm bg-transparent border-none shadow-none text-foreground hover:bg-muted font-medium flex items-center gap-2 px-2 md:px-3"
                     title="Histórico de Preços">
                     <i data-lucide="history" class="w-4 h-4"></i>
-                    <span class="hidden lg:inline">Histórico de Preços</span>
+                    <span class="hidden lg:inline">Preços</span>
+                </a>
+
+                <a href="{% url 'product_movement_overview' %}"
+                    class="btn btn-ghost btn-sm bg-transparent border-none shadow-none text-foreground hover:bg-muted font-medium flex items-center gap-2 px-2 md:px-3"
+                    title="Movimentações de Estoque">
+                    <i data-lucide="package-search" class="w-4 h-4 text-primary"></i>
+                    <span class="hidden lg:inline">Estoque</span>
                 </a>
 
                 <a href="{% url 'profile' %}"
@@ -68,7 +75,7 @@
                     </div>
                     <div class="hidden sm:flex flex-col text-left">
                         <span class="text-[11px] font-bold leading-none">{{ user.username }}</span>
-                        <span class="text-[9px] text-muted-foreground truncate max-w-20">{{ user.email }}</span>
+                        <span class="text-[9px] text-muted-foreground truncate">{{ user.email }}</span>
                     </div>
                 </a>
 

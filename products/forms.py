@@ -1,6 +1,6 @@
 from django import forms
 from decimal import Decimal, InvalidOperation as DecimalException
-from .models import Product, Category
+from .models import Product, Category, ProductMovement
 
 
 class CategoryForm(forms.ModelForm):
@@ -93,3 +93,23 @@ class ProductForm(forms.ModelForm):
             return Decimal(price_numeric)
         except (ValueError, TypeError, DecimalException):
             raise forms.ValidationError("Informe um preço válido (ex: 55,99).")
+
+
+class MovementForm(forms.ModelForm):
+    class Meta:
+        model = ProductMovement
+        fields = ["quantity", "reason"]
+        widgets = {
+            "quantity": forms.NumberInput(
+                attrs={"class": "input w-full", "min": "1", "placeholder": "Quantidade"}
+            ),
+            "reason": forms.TextInput(
+                attrs={"class": "input w-full", "placeholder": "Motivo (opcional)"}
+            ),
+        }
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data.get("quantity")
+        if quantity is None or quantity <= 0:
+            raise forms.ValidationError("A quantidade deve ser maior que zero.")
+        return quantity

@@ -5,10 +5,20 @@ urlpatterns = [
     path("", views.product_list, name="product_list"),
     path("detail/<int:pk>/", views.product_detail, name="product_detail"),
     path("price-history/<int:pk>/", views.price_history_view, name="price_history"),
+    path("price-history/", views.price_history_overview, name="price_history_overview"),
+    path("movements/<int:pk>/", views.product_movement_view, name="product_movement"),
     path(
-        "price-history/",
-        views.price_history_overview,
-        name="price_history_overview",
+        "movements/", views.product_movement_overview, name="product_movement_overview"
+    ),
+    path(
+        "movements/select/<str:type>/",
+        views.movement_select_product,
+        name="movement_select_product",
+    ),
+    path(
+        "movements/perform/<int:pk>/<str:type>/",
+        views.perform_movement,
+        name="perform_movement",
     ),
     path("public/", views.public_product_list, name="public_product_list"),
     path("add/", views.product_create, name="product_create"),

@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block content %}
+<div class="flex flex-col gap-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+            <h2 class="text-3xl font-bold tracking-tight">{{ title }}</h2>
+            <p class="text-muted-foreground">Selecione o produto no qual deseja realizar a {{ type_display|lower }}.</p>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- View Toggle -->
+            <div class="bg-muted/50 p-1 rounded-lg flex gap-1 border border-border h-10 items-center mr-2">
+                <a href="{% url 'set_view_mode' view_context 'grid' %}"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if view_mode == 'grid' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
+                    title="Ver como grade">
+                    <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                </a>
+                <a href="{% url 'set_view_mode' view_context 'table' %}"
+                    class="w-8 h-8 flex items-center justify-center rounded-md transition-all btn-ghost bg-transparent text-foreground p-0 {% if view_mode == 'table' %}bg-background shadow-sm text-foreground{% else %}text-muted-foreground{% endif %}"
+                    title="Ver como tabela">
+                    <i data-lucide="list" class="w-4 h-4"></i>
+                </a>
+            </div>
+
+            <a href="{% url 'product_movement_overview' %}"
+                class="btn btn-ghost bg-transparent border shadow-none text-foreground hover:bg-muted">
+                Cancelar
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <form method="get" class="card p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="field">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"></i>
+                    <input type="text" name="q" value="{{ q|default:'' }}" placeholder="Buscar por nome..." class="input w-full pl-10">
+                </div>
+            </div>
+
+            <div class="field">
+                <select name="category" class="input w-full">
+                    <option value="">Todas as Categorias</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.id }}" {% if category_id == cat.id|stringformat:'i' %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="field">
+                <select name="status" class="input w-full">
+                    <option value="">Todos os Status</option>
+                    <option value="public" {% if status == 'public' %}selected{% endif %}>Público</option>
+                    <option value="private" {% if status == 'private' %}selected{% endif %}>Privado</option>
+                </select>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit"
+                class="btn btn-ghost border border-border bg-transparent flex-1 h-9 text-foreground hover:bg-muted font-bold">
+                    Filtrar
+                </button>
+                <a href="{% url 'movement_select_product' type %}"
+                    class="btn btn-ghost border border-border bg-transparent p-2 h-9 text-foreground hover:bg-muted"
+                    title="Limpar Filtros">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+    </form>
+
+    <!-- Product Grid for Selection (Grid View) -->
+    <div id="view-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 {% if view_mode == 'table' %}hidden{% endif %}">
+        {% for product in products %}
+        <div class="card flex flex-col h-full hover:border-primary transition-colors cursor-pointer group"
+             onclick="window.location.href='{% url 'perform_movement' product.pk type %}'">
+            <header>
+                <div class="flex justify-between items-start w-full">
+                    <div>
+                        <h3 class="text-lg font-bold line-clamp-1 group-hover:text-primary transition-colors">{{ product.name }}</h3>
+                        <p class="text-sm text-muted-foreground">Estoque: <span class="font-bold text-foreground">{{ product.stock }}</span></p>
+                    </div>
+                    <div class="shrink-0">
+                         <span class="text-[10px] uppercase font-bold px-2 py-0.5 rounded-full {% if product.is_public %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {{ product.is_public|yesno:"Público,Privado" }}
+                        </span>
+                    </div>
+                </div>
+            </header>
+            <section class="mt-2 text-wrap">
+                <div class="flex flex-wrap gap-1">
+                    {% for cat in product.categories.all %}
+                    <span class="badge text-[12px] py-0 px-1 border-none text-white" style="background-color: {{ cat.color }}">
+                        {{ cat.name }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </section>
+            <footer class="mt-4 pt-4 border-t border-border flex justify-end">
+                <button type="submit" class="btn btn-ghost bg-transparent border shadow-none text-foreground hover:bg-muted">
+                    Selecionar
+                </button>
+            </footer>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-12 text-center card bg-muted/20">
+            <i data-lucide="package-search" class="w-12 h-12 text-muted-foreground mx-auto mb-4"></i>
+            <p class="text-muted-foreground">Nenhum produto encontrado para estes filtros.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table View -->
+    <div id="view-table" class="card overflow-hidden {% if view_mode == 'grid' %}hidden{% endif %}">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-muted/50 border-b border-border">
+                    <tr>
+                        <th class="px-6 py-4 font-semibold">Produto</th>
+                        <th class="px-6 py-4 font-semibold text-center">Estoque</th>
+                        <th class="px-6 py-4 font-semibold">Categorias</th>
+                        <th class="px-6 py-4 font-semibold text-right">Ação</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-border">
+                    {% for product in products %}
+                    <tr class="hover:bg-muted/30 transition-colors cursor-pointer group"
+                        onclick="window.location.href='{% url 'perform_movement' product.pk type %}'">
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-foreground group-hover:text-primary transition-colors">{{ product.name }}</div>
+                            <div class="text-[10px] uppercase font-bold text-muted-foreground">{{ product.is_public|yesno:"Público,Privado" }}</div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="badge {% if product.stock > 0 %}badge-secondary{% else %}badge-destructive{% endif %}">
+                                {{ product.stock }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex flex-wrap gap-1">
+                                {% for cat in product.categories.all %}
+                                <span class="badge text-[9px] py-0 px-1 border-none text-white whitespace-nowrap text-[12px]" style="background-color: {{ cat.color }}">
+                                    {{ cat.name }}
+                                </span>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-right">
+                            <button type="submit"
+                                class="btn btn-ghost bg-transparent shadow-none flex-1 h-9 text-foreground hover:bg-muted">
+                                Selecionar
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-12 text-center text-muted-foreground">
+                            Nenhum produto encontrado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

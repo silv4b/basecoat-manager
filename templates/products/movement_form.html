@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load l10n %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8 flex items-center gap-4">
+        <a href="{% url 'movement_select_product' type %}" class="btn btn-ghost bg-transparent shadow-none text-foreground hover:bg-muted">
+            <i data-lucide="arrow-left" class="w-6 h-6"></i>
+        </a>
+        <div>
+            <h1 class="text-3xl font-bold tracking-tight">Realizar {{ type_display }}</h1>
+            <p class="text-muted-foreground">{{ product.name }}</p>
+        </div>
+    </div>
+
+    <!-- Info Card -->
+    <div class="card mb-8 bg-primary/5 border-dashed border-primary/30">
+        <div class="flex flex-col sm:flex-row justify-between gap-4 p-6">
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Estoque Atual</p>
+                <p class="text-2xl font-bold text-foreground">{{ product.stock }} unidades</p>
+            </div>
+            <div>
+                <p class="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Impacto Previsto</p>
+                <p id="impact-display" class="text-2xl font-bold {% if type == 'IN' %}text-green-600{% else %}text-red-600{% endif %}">
+                    {{ product.stock }} unidades
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="card">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+
+            <div class="grid grid-cols-1 gap-6 px-6">
+                <div class="field">
+                    <label for="{{ form.quantity.id_for_label }}" class="text-sm font-bold text-foreground block mb-2">
+                        Quantidade a {% if type == 'IN' %}Adicionar{% else %}Remover{% endif %}
+                    </label>
+                    {{ form.quantity }}
+                    {% if form.quantity.errors %}
+                        <p class="text-destructive text-xs mt-1">{{ form.quantity.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div class="field">
+                    <label for="{{ form.reason.id_for_label }}" class="text-sm font-bold text-foreground block mb-2">
+                        Motivo / Justificativa
+                    </label>
+                    {{ form.reason }}
+                    <p class="text-[10px] text-muted-foreground mt-1">Ex: Compra de estoque, Devolução, Venda manual, etc.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border mt-8 px-6">
+                <button type="submit" class="btn hover:bg-red-900 {% if type == 'IN' %}btn-primary{% else %}btn-destructive{% endif %} flex-1 h-12">
+                    Confirmar {{ type_display }}
+                </button>
+                <a href="{% url 'movement_select_product' type %}" class="btn btn-ghost border border-border bg-transparent text-foreground h-12 flex-1 hover:bg-muted">
+                    Voltar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const quantityInput = document.getElementById('{{ form.quantity.id_for_label }}');
+        const impactDisplay = document.getElementById('impact-display');
+        const currentStock = {{ product.stock }};
+        const type = '{{ type }}';
+
+        function updateImpact() {
+            const val = parseInt(quantityInput.value) || 0;
+            let result;
+            if (type === 'IN') {
+                result = currentStock + val;
+            } else {
+                result = Math.max(0, currentStock - val);
+            }
+            impactDisplay.textContent = result + ' unidades';
+        }
+
+        quantityInput.addEventListener('input', updateImpact);
+        // Initial call
+        updateImpact();
+    });
+</script>
+{% endblock %}

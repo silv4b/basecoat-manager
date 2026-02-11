@@ -5,7 +5,7 @@ from django.dispatch import receiver
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .models import PriceHistory
+    from .models import PriceHistory, ProductMovement
 
 
 class Category(models.Model):
@@ -69,6 +69,27 @@ class PriceHistory(models.Model):
         ordering = ["-changed_at"]
 
 
+class ProductMovement(models.Model):
+    MOVEMENT_TYPES = [
+        ("IN", "Entrada"),
+        ("OUT", "Saída"),
+    ]
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name="movements"
+    )
+    type = models.CharField(max_length=3, choices=MOVEMENT_TYPES)
+    quantity = models.IntegerField()
+    reason = models.CharField(max_length=255, blank=True)
+    moved_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.get_type_display()} - {self.product.name} ({self.quantity}) em {self.moved_at.strftime('%d/%m/%Y %H:%M')}"
+
+    class Meta:
+        verbose_name_plural = "Product Movements"
+        ordering = ["-moved_at"]
+
+
 class Profile(models.Model):
     THEME_CHOICES = [
         ("light", "Light"),
@@ -124,6 +145,59 @@ def track_price_changes(sender, instance, created, **kwargs):
         # Se o preço mudou, cria um novo registro
         elif last_price_entry.price != instance.price:
             PriceHistory.objects.create(product=instance, price=instance.price)
+
+
+@receiver(post_save, sender=Product)
+def track_stock_changes(sender, instance, created, **kwargs):
+    """
+    Registra automaticamente mudanças de estoque no histórico de movimentações.
+    Cria um registro inicial quando o produto é criado.
+    """
+    if created:
+        # Primeiro registro de estoque (Entrada) ao criar o produto
+        if instance.stock > 0:
+            ProductMovement.objects.create(
+                product=instance,
+                type="IN",
+                quantity=instance.stock,
+                reason="Registro inicial do produto",
+            )
+    else:
+        # Verifica se o estoque mudou comparando com o último estado conhecido
+        # Precisamos saber o estoque anterior. Como o Django não guarda o estado anterior nativamente no save,
+        # poderíamos usar um middleware ou buscar o último registro de movimentação para calcular.
+        # Mas uma forma mais simples é ver o saldo acumulado das movimentações.
+        # No entanto, se o usuário editar o campo 'stock' livremente, queremos capturar a diferença.
+
+        from django.db.models import Sum
+
+        movements_sum = (
+            instance.movements.aggregate(
+                total=Sum(
+                    models.Case(
+                        models.When(type="IN", then=models.F("quantity")),
+                        models.When(type="OUT", then=-models.F("quantity")),
+                        default=0,
+                        output_field=models.IntegerField(),
+                    )
+                )
+            )["total"]
+            or 0
+        )
+
+        diff = instance.stock - movements_sum
+
+        if diff > 0:
+            ProductMovement.objects.create(
+                product=instance, type="IN", quantity=diff, reason="Ajuste de estoque"
+            )
+        elif diff < 0:
+            ProductMovement.objects.create(
+                product=instance,
+                type="OUT",
+                quantity=abs(diff),
+                reason="Ajuste de estoque",
+            )
 
 
 @receiver(post_save, sender=User)

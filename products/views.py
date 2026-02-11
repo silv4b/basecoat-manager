@@ -2,8 +2,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db import models
 from django.contrib.auth.models import User
-from .models import Product, Category, PriceHistory
-from .forms import ProductForm, CategoryForm
+from .models import Product, Category, PriceHistory, ProductMovement
+from .forms import ProductForm, CategoryForm, MovementForm
 from django.contrib import messages
 from django.db.models import Min, Sum, F, ExpressionWrapper, DecimalField, Q
 
@@ -387,6 +387,242 @@ def price_history_overview(request):
     }
 
     return render(request, "products/price_history_overview.html", context)
+
+
+def product_movement_view(request, pk):
+    product = get_object_or_404(Product, pk=pk)
+
+    # Verificação de permissão
+    if not product.is_public:
+        if not request.user.is_authenticated or product.user != request.user:
+            messages.error(request, "Você não tem permissão para ver este produto.")
+            return redirect("account_login")
+
+    movements = product.movements.all()
+
+    # Filtros de data
+    data_inicio = request.GET.get("data_inicio")
+    data_fim = request.GET.get("data_fim")
+    tipo = request.GET.get("tipo")
+
+    if data_inicio:
+        try:
+            from datetime import datetime
+
+            data_inicio_obj = datetime.strptime(data_inicio, "%Y-%m-%d")
+            movements = movements.filter(moved_at__gte=data_inicio_obj)
+        except ValueError:
+            pass
+
+    if data_fim:
+        try:
+            from datetime import datetime, timedelta
+
+            data_fim_obj = datetime.strptime(data_fim, "%Y-%m-%d")
+            data_fim_obj = data_fim_obj + timedelta(days=1)
+            movements = movements.filter(moved_at__lt=data_fim_obj)
+        except ValueError:
+            pass
+
+    if tipo in ["IN", "OUT"]:
+        movements = movements.filter(type=tipo)
+
+    return render(
+        request,
+        "products/product_movement.html",
+        {
+            "product": product,
+            "movements": movements,
+            "data_inicio": data_inicio,
+            "data_fim": data_fim,
+            "tipo": tipo,
+            "view_mode": request.user.profile.view_preferences.get(
+                "product_movement", "table"
+            ),
+            "view_context": "product_movement",
+        },
+    )
+
+
+def product_movement_overview(request):
+    """Dashboard consolidado de movimentações de todos os produtos"""
+    if not request.user.is_authenticated:
+        messages.error(request, "Você precisa estar logado para acessar esta página.")
+        return redirect("account_login")
+
+    # Base Queryset
+    user_products = Product.objects.filter(user=request.user)
+
+    # Filtro por Termo de Busca (q)
+    q = request.GET.get("q", "")
+    if q:
+        user_products = user_products.filter(
+            models.Q(name__icontains=q) | models.Q(description__icontains=q)
+        )
+
+    # Filtro por Categoria
+    category_id = request.GET.get("category")
+    if category_id:
+        user_products = user_products.filter(categories__id=category_id)
+
+    movements = ProductMovement.objects.filter(
+        product__in=user_products
+    ).select_related("product")
+
+    # Filtros de data e tipo
+    data_inicio = request.GET.get("data_inicio")
+    data_fim = request.GET.get("data_fim")
+    tipo = request.GET.get("tipo")
+
+    if data_inicio:
+        try:
+            from datetime import datetime
+
+            data_inicio_obj = datetime.strptime(data_inicio, "%Y-%m-%d")
+            movements = movements.filter(moved_at__gte=data_inicio_obj)
+        except ValueError:
+            pass
+
+    if data_fim:
+        try:
+            from datetime import datetime, timedelta
+
+            data_fim_obj = datetime.strptime(data_fim, "%Y-%m-%d")
+            data_fim_obj = data_fim_obj + timedelta(days=1)
+            movements = movements.filter(moved_at__lt=data_fim_obj)
+        except ValueError:
+            pass
+
+    if tipo in ["IN", "OUT"]:
+        movements = movements.filter(type=tipo)
+
+    # Estatísticas
+    from django.db.models import Sum
+
+    total_in = (
+        movements.filter(type="IN").aggregate(total=Sum("quantity"))["total"] or 0
+    )
+    total_out = (
+        movements.filter(type="OUT").aggregate(total=Sum("quantity"))["total"] or 0
+    )
+
+    context = {
+        "movements": movements,
+        "total_in": total_in,
+        "total_out": total_out,
+        "q": q,
+        "selected_category": int(category_id) if category_id else "",
+        "categorias": Category.objects.filter(user=request.user).distinct(),
+        "data_inicio": data_inicio,
+        "data_fim": data_fim,
+        "tipo": tipo,
+        "view_mode": request.user.profile.view_preferences.get(
+            "movement_overview", "table"
+        ),
+        "view_context": "movement_overview",
+    }
+
+    return render(request, "products/product_movement_overview.html", context)
+
+
+@login_required
+def movement_select_product(request, type):
+    """Tela para buscar e selecionar um produto para realizar entrada ou saída"""
+    if type not in ["IN", "OUT"]:
+        return redirect("product_movement_overview")
+
+    # Base Queryset
+    products = Product.objects.filter(user=request.user)
+
+    # Filtros
+    q = request.GET.get("q", "")
+    category_id = request.GET.get("category", "")
+    status = request.GET.get("status", "")
+
+    if q:
+        products = products.filter(Q(name__icontains=q) | Q(description__icontains=q))
+    if category_id:
+        products = products.filter(categories__id=category_id)
+    if status == "public":
+        products = products.filter(is_public=True)
+    elif status == "private":
+        products = products.filter(is_public=False)
+
+    products = products.distinct().order_by("name")
+
+    context = {
+        "products": products,
+        "type": type,
+        "type_display": "Entrada" if type == "IN" else "Saída",
+        "categories": Category.objects.filter(user=request.user),
+        "q": q,
+        "category_id": category_id,
+        "status": status,
+        "title": f"Selecionar Produto para {('Entrada' if type == 'IN' else 'Saída')}",
+        "view_mode": request.user.profile.view_preferences.get(
+            "movement_select", "grid"
+        ),
+        "view_context": "movement_select",
+    }
+    return render(request, "products/movement_select_product.html", context)
+
+
+@login_required
+def perform_movement(request, pk, type):
+    """Tela para registrar a quantidade e motivo da movimentação"""
+    product = get_object_or_404(Product, pk=pk, user=request.user)
+    if type not in ["IN", "OUT"]:
+        return redirect("product_movement_overview")
+
+    if request.method == "POST":
+        form = MovementForm(request.POST)
+        if form.is_valid():
+            movement = form.save(commit=False)
+            movement.product = product
+            movement.type = type
+
+            # Atualiza o estoque do produto
+            if type == "IN":
+                product.stock += movement.quantity
+            else:
+                if product.stock < movement.quantity:
+                    messages.error(
+                        request,
+                        f"Estoque insuficiente para realizar esta saída. Estoque atual: {product.stock}",
+                    )
+                    return render(
+                        request,
+                        "products/movement_form.html",
+                        {
+                            "form": form,
+                            "product": product,
+                            "type": type,
+                            "type_display": "Entrada" if type == "IN" else "Saída",
+                        },
+                    )
+                product.stock -= movement.quantity
+
+            movement.save()
+            product.save()
+
+            messages.success(
+                request,
+                f"{('Entrada' if type == 'IN' else 'Saída')} realizada com sucesso para {product.name}!",
+            )
+            return redirect("product_movement_overview")
+    else:
+        form = MovementForm()
+
+    return render(
+        request,
+        "products/movement_form.html",
+        {
+            "form": form,
+            "product": product,
+            "type": type,
+            "type_display": "Entrada" if type == "IN" else "Saída",
+        },
+    )
 
 
 # --- Category Views ---
