@@ -6,6 +6,9 @@ from .models import Product, Category, PriceHistory, ProductMovement
 from .forms import ProductForm, CategoryForm, MovementForm
 from django.contrib import messages
 from django.db.models import Min, Sum, F, ExpressionWrapper, DecimalField, Q
+from django.utils import timezone
+from datetime import datetime, timedelta
+from django.db.models import Count
 
 
 # --- Product Views ---
@@ -277,20 +280,22 @@ def price_history_view(request, pk):
 
     if data_inicio:
         try:
-            from datetime import datetime
-
+            # Converte string para datetime ingênuo
             data_inicio_obj = datetime.strptime(data_inicio, "%Y-%m-%d")
+            # Torna o datetime ciente (aware) do fuso horário do projeto
+            data_inicio_obj = timezone.make_aware(data_inicio_obj)
             price_history = price_history.filter(changed_at__gte=data_inicio_obj)
         except ValueError:
             pass
 
     if data_fim:
         try:
-            from datetime import datetime, timedelta
-
+            # Converte string para datetime ingênuo
             data_fim_obj = datetime.strptime(data_fim, "%Y-%m-%d")
-            # Adiciona 1 dia para incluir todo o dia final
+            # Adiciona 1 dia para incluir todo o dia final (até 23:59:59)
             data_fim_obj = data_fim_obj + timedelta(days=1)
+            # Torna o datetime ciente (aware)
+            data_fim_obj = timezone.make_aware(data_fim_obj)
             price_history = price_history.filter(changed_at__lt=data_fim_obj)
         except ValueError:
             pass
@@ -309,9 +314,6 @@ def price_history_view(request, pk):
 
 def price_history_overview(request):
     """Dashboard consolidado de histórico de preços de todos os produtos"""
-    from django.db.models import Count
-    from datetime import datetime, timedelta
-
     # Apenas produtos do usuário logado
     if not request.user.is_authenticated:
         messages.error(request, "Você precisa estar logado para acessar esta página.")
@@ -469,8 +471,6 @@ def product_movement_view(request, pk):
 
     if data_fim:
         try:
-            from datetime import datetime, timedelta
-
             data_fim_obj = datetime.strptime(data_fim, "%Y-%m-%d")
             data_fim_obj = data_fim_obj + timedelta(days=1)
             movements = movements.filter(moved_at__lt=data_fim_obj)
@@ -538,8 +538,6 @@ def product_movement_overview(request):
 
     if data_fim:
         try:
-            from datetime import datetime, timedelta
-
             data_fim_obj = datetime.strptime(data_fim, "%Y-%m-%d")
             data_fim_obj = data_fim_obj + timedelta(days=1)
             movements = movements.filter(moved_at__lt=data_fim_obj)

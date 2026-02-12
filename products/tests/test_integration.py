@@ -1,11 +1,12 @@
 from decimal import Decimal
 from django.http import HttpResponse
 from django.test import TestCase, Client
-from django.contrib.auth.models import User
 from django.urls import reverse
 from products.models import Product, Category
 from products.tests.factories import UserFactory, CategoryFactory, ProductFactory
 from products.tests.test_utils import BaseTestCase
+from django.utils import timezone
+from datetime import timedelta
 
 
 class ProductWorkflowTest(BaseTestCase):
@@ -411,9 +412,7 @@ class PriceHistoryWorkflowTest(BaseTestCase):
         )  # Ultimo valor atualizado do produto em questão.
 
         # Testa o filtro de data no histórico de preço
-        from datetime import datetime, timedelta
-
-        today = datetime.now().date()
+        today = timezone.localdate()
         yesterday = today - timedelta(days=1)
 
         response = self.client.get(

@@ -63,11 +63,6 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductMovementSerializer(data=request.data)
 
         if serializer.is_valid():
-            # A lógica de atualizar o estoque já está nos sinais do modelo Product,
-            # mas o sinal 'track_stock_changes' é disparado no post_save do Product.
-            # Se criarmos o movimento diretamente, o sinal não disparará (pois salva Movement, não Product).
-            # No entanto, a view 'perform_movement' no views.py original atualiza o estoque do produto manualmente.
-
             movement_type = serializer.validated_data["type"]
             quantity = serializer.validated_data["quantity"]
 
