@@ -79,8 +79,9 @@ Para documentação interativa, acesse:
 
 Para mais guias e configurações, consulte a pasta `docs/`:
 
+- [Guia de Configuração do Ambiente de Desenvolvimento](docs/setup-ambiente-desenvolvimento.md)
 - [Validação de E-mail com Django-Allauth](docs/django-allauth-email-validation.md)
 - [Login Social (Google e GitHub) com Django-Allauth](docs/django-allauth-social-login.md)
 - [Configuração Docker e PostgreSQL](docs/setup-docker-postgres.md)
 - [Uso de UV e PoeThePoet](docs/uv-and-poethepoet.md)
-- [Roadmap do Projeto](docs/roadmap.md)
+- [Roadmap do Projeto](docs/kore-product-roadmap.md)
