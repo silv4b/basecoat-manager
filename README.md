@@ -34,30 +34,24 @@ O projeto utiliza as seguintes tecnologias:
 
 ### Pré-requisitos
 
-- Python 3.10 ou superior.
+- [uv](https://docs.astral.sh/uv/) (gerenciador de pacotes e ambientes Python).
 - Node.js (para compilação do CSS).
-- Pip (gerenciador de pacotes do Python).
 
 ### Passos para Instalação
 
 1. Clone o repositório para sua máquina local.
 
-2. Crie e ative um ambiente virtual:
-   - `python -m venv venv`
-   - `.\venv\Scripts\activate`  (Windows)
-   - `source venv/bin/activate` (Linux/macOS)
+2. Instale as dependências do Python:
+   `uv sync`
 
-3. Instale as dependências do Python:
-   `pip install -r requirements.txt`
-
-4. Instale as dependências do Node.js:
+3. Instale as dependências do Node.js:
    `npm install`
 
-5. Configure as variáveis de ambiente (Opcional):
+4. Configure as variáveis de ambiente (Opcional):
    Crie um arquivo `.env` baseado no `.env.example`. Se não configurado, o sistema usará SQLite por padrão.
 
-6. Execute as migrações do banco de dados:
-   `python manage.py migrate`
+5. Execute as migrações do banco de dados:
+   `uv run manage.py migrate`
 
 ### Executando a Aplicação
 
@@ -69,7 +63,7 @@ Para rodar o projeto, você precisará de dois processos rodando (ou buildar o C
    (Ou para build de produção: `npm run build`)
 
 2. Servidor de Desenvolvimento (em outro terminal):
-   `python manage.py runserver`
+   `uv run manage.py runserver`
 
 A aplicação estará disponível em: <http://127.0.0.1:8000/>
 
@@ -80,3 +74,13 @@ Para documentação interativa, acesse:
 
 - **Swagger UI**: <http://127.0.0.1:8000/api/v1/docs/swagger/>
 - **ReDoc**: <http://127.0.0.1:8000/api/v1/docs/redoc/>
+
+## Documentação Adicional
+
+Para mais guias e configurações, consulte a pasta `docs/`:
+
+- [Validação de E-mail com Django-Allauth](docs/django-allauth-email-validation.md)
+- [Login Social (Google e GitHub) com Django-Allauth](docs/django-allauth-social-login.md)
+- [Configuração Docker e PostgreSQL](docs/setup-docker-postgres.md)
+- [Uso de UV e PoeThePoet](docs/uv-and-poethepoet.md)
+- [Roadmap do Projeto](docs/roadmap.md)

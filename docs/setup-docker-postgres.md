@@ -19,12 +19,11 @@ Na raiz do seu projeto, crie um arquivo chamado `docker-compose.yml`. Este arqui
 Crie o arquivo com o seguinte conteúdo:
 
 ```yaml
-version: '3.8'
-
 services:
   db:
     image: postgres:15
     container_name: postgres_db
+    restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     environment:
@@ -42,7 +41,7 @@ volumes:
 
 Para manter a segurança e facilitar a alteração de ambientes, é recomendável usar um arquivo `.env`.
 
-Na raiz do projeto, crie um arquivo chamado `.env` e adicione as seguintes informações (correspondentes ao que definimos no docker-compose):
+Na raiz do projeto, crie um arquivo chamado `.env` (ou copie do `.env.example`) e adicione as seguintes informações:
 
 ```env
 DB_NAME=basecoat_db
@@ -52,46 +51,68 @@ DB_HOST=localhost
 DB_PORT=5432
 ```
 
-## 4. Atualização das Configurações do Django
+## 4. Instalação das Dependências
 
-Agora você precisa alterar o arquivo `kore-product-manager/settings.py` para que ele leia as informações do banco de dados a partir das variáveis de ambiente.
-
-Primeiro, instale o pacote `python-dotenv` para permitir que o Django leia o arquivo `.env`:
+Para que o Django consiga se comunicar com o PostgreSQL e ler o arquivo `.env`, você precisa instalar os pacotes necessários utilizando o `uv`:
 
 ```bash
-pip install python-dotenv
+uv add psycopg2-binary python-dotenv
 ```
 
-Em seguida, abra o arquivo `kore-product-manager/settings.py` e adicione no topo do arquivo (após os imports):
+*Nota: O `psycopg2-binary` é o adaptador do banco de dados e o `python-dotenv` é usado para carregar as variáveis do arquivo `.env`.*
+
+## 5. Verificação das Configurações do Django
+
+O projeto já vem configurado para buscar essas variáveis de ambiente. Verifique o arquivo `kore-product-manager/settings.py` para garantir que as seções abaixo estejam presentes.
+
+No topo do arquivo (após os imports):
 
 ```python
+from pathlib import Path
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Carrega variáveis do arquivo .env
+load_dotenv(BASE_DIR / ".env")
 ```
 
-E altere a seção `DATABASES` para:
+E a seção `DATABASES`:
 
 ```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST'),
-        'PORT': os.getenv('DB_PORT'),
+DB_NAME = os.environ.get("DB_NAME")
+DB_USER = os.environ.get("DB_USER")
+DB_PASSWORD = os.environ.get("DB_PASSWORD")
+DB_HOST = os.environ.get("DB_HOST", "localhost")
+DB_PORT = os.environ.get("DB_PORT", "5432")
+
+if DB_NAME and DB_USER and DB_PASSWORD:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": DB_NAME,
+            "USER": DB_USER,
+            "PASSWORD": DB_PASSWORD,
+            "HOST": DB_HOST,
+            "PORT": DB_PORT,
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
 ```
 
-## 5. Execução do Banco de Dados
+## 6. Execução do Banco de Dados
 
 Com tudo configurado, você pode subir o contêiner do PostgreSQL. Abra o terminal na raiz do projeto e execute:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 O comando `-d` serve para rodar o processo em segundo plano (detached mode).
@@ -102,36 +123,36 @@ Para verificar se o contêiner está rodando:
 docker ps
 ```
 
-## 6. Realização das Migrações
+## 7. Realização das Migrações
 
-Agora que o banco de dados PostgreSQL está ativo e o Django está apontando para ele, você precisa criar a estrutura das tabelas:
+Agora que o banco de dados PostgreSQL está ativo e o Django está configurado para usá-lo, você precisa criar a estrutura das tabelas:
 
 ```bash
-python manage.py migrate
+uv run manage.py migrate
 ```
 
-## 7. Comandos Úteis para o Dia a Dia
+## 8. Comandos Úteis para o Dia a Dia
 
 Para parar o banco de dados:
 
 ```bash
-docker-compose stop
+docker compose stop
 ```
 
 Para iniciar novamente:
 
 ```bash
-docker-compose start
+docker compose start
 ```
 
 Para remover o contêiner (os dados serão mantidos no volume):
 
 ```bash
-docker-compose down
+docker compose down
 ```
 
-Para visualizar os logs em tempo real caso ocorra algum erro:
+Para visualizar os logs em tempo real:
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
